@@ -1,0 +1,53 @@
+[package]
+name = "grawlix"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "grawlix"
+path = "src/lib.rs"
+
+[[bin]]
+name = "grawlix-cli"
+path = "src/cli/main.rs"
+required-features = ["binary"]
+
+[features]
+default = ["download", "binary"]
+download = ["reqwest", "bytes"]
+binary = ["colored", "structopt", "toml", "dirs"]
+
+[dependencies]
+regex = { version = "1" }
+# Parsing command line arguments
+structopt = { version = "0.3", optional = true }
+# Importing and exporting metadata
+xml-rs = "^0.8"
+# Deserializing and serializing data from sources and comics
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "^1.0"
+# Formatting comics as strings
+rt-format = "^0.3"
+# Handling errors
+thiserror = "1.0"
+# Making http requests
+reqwest = { version = "0.11", features = ["json"], optional = true }
+# Handling responses from reqwest
+bytes = { version = "1.1", optional = true }
+# Async
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+async-recursion = "1.0"
+# Reading and writing cbz files
+zip = "0.6"
+# Configuration file
+toml = { version = "0.5", optional = true }
+dirs = { version = "4", optional = true }
+# Logging
+log = "0.4"
+fern = "0.6"
+colored = { version = "^2.0", optional = true }
+# Handle ctrl-c
+ctrlc = "3"

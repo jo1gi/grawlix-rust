@@ -1,0 +1,36 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<comet
+  xmlns:comet="http://www.denvog.com/comet/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.denvog.com http://www.denvog.com/comet/comet.xsd">
+<title>Batman: The Widening Gyre, Part One: Turning and Turning</title>
+<description>The series opens with Deadshot breaking into Arkham Asylum with the intent to kill The Joker but is stopped by Onomatopoeia, who shoots him in the head.</description>
+<series>Batman: The Widening Gyre</series>
+<issue>1</issue>
+<volume>1</volume>
+<publisher>DC Comics</publisher>
+<date>2009-08-26</date>
+<genre>Superhero</genre>
+<character>Batman</character>
+<character>Joker</character>
+<isVersionOf>Batman</isVersionOf>
+<price>2.99</price>
+<format>Comic</format>
+<language>en</language>
+<rating>Teen</rating>
+<rights>Copyright (c) 2009 DC Comics</rights>
+<identifier>76194128380700111</identifier>
+<pages>36</pages>
+<creator>Bob Kane</creator>
+<writer>Kevin Smith</writer>
+<penciller>Walt Flanagan</penciller>
+<editor>Mike Marts</editor>
+<editor>Dan Dideo</editor>
+<coverDesigner>Bill Sienkiewicz</coverDesigner>
+<letterer>Jared Fletcher</letterer>
+<inker>Art Thibert</inker>
+<colorist>Art Lyon</colorist>
+<coverImage>BatmanWideningCover.jpg</coverImage>
+<lastMark>12</lastMark>
+<readingDirection>ltr</readingDirection>
+</comet>
