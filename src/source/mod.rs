@@ -1,5 +1,8 @@
 mod download;
+mod tools;
+
 mod flipp;
+mod webtoon;
 
 use crate::{
     error::GrawlixDownloadError as Error,
@@ -8,6 +11,7 @@ use crate::{
 };
 use reqwest::Client;
 pub use download::{download_comics, download_comics_metadata};
+use tools::{issue_id_match, source_request};
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
@@ -44,6 +48,7 @@ pub enum Credentials {
     ApiKey(String),
 }
 
+
 /// Find first matching regular expression and evaluated corresponding expression
 macro_rules! match_re {
     ($url:expr, $($pattern:expr => $e:expr),+) => (
@@ -59,7 +64,8 @@ macro_rules! match_re {
 /// Create a corresponding `Source` trait object from url
 pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
     match_re!(url,
-        "flipp.dk" => flipp::Flipp
+        "flipp.dk" => flipp::Flipp,
+        "webtoons.com" => webtoon::Webtoon
     );
     Err(Error::UrlNotSupported(url.to_string()))
 }

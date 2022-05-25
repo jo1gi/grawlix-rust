@@ -82,5 +82,3 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
 fn default_template() -> String {
     String::from("{series}/{title}")
 }
-
-fn false_fn() -> bool { false }

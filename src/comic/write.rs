@@ -16,10 +16,19 @@ impl Comic {
         for (n, page) in self.pages.iter().enumerate() {
             // Getting page data
             let page_data = match &page.page_type {
+                // TODO Remove unwraps
                 // Download page
-                PageType::Url(url) => client.get(url).send().await.unwrap().bytes().await.unwrap(),
+                PageType::Url(url) =>
+                    client.get(url)
+                        .send().await.unwrap()
+                        .bytes().await.unwrap(),
+                PageType::UrlWithHeaders(url, headers) =>
+                    client.get(url)
+                        .headers(headers.try_into().unwrap())
+                        .send().await.unwrap()
+                        .bytes().await.unwrap(),
                 // Skipping rewriting pages already stored in file
-                _ => continue,
+                PageType::Container(_) => continue,
             };
             let filename = format!("{} #{:0>3}.{}", self.title(), n, &page.file_format);
             comic_file.write_file(&page_data, &filename)?;

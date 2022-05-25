@@ -1,6 +1,8 @@
 mod format;
 pub mod read;
 mod write;
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 use crate::metadata::Metadata;
@@ -65,6 +67,8 @@ pub struct Page {
 pub enum PageType {
     /// Page on website
     Url(String),
+    /// Page on website with required headers
+    UrlWithHeaders(String, HashMap<String, String>),
     /// Page in container
     Container(String),
 }
@@ -77,10 +81,17 @@ impl Page {
         }
     }
 
-    pub fn from_filename(url: &str, file_format: &str) -> Self {
+    pub fn from_url_with_headers(url: &str, headers: HashMap<String, String>, file_format: &str) -> Self {
         Self {
             file_format: file_format.to_string(),
-            page_type: PageType::Container(url.to_string())
+            page_type: PageType::UrlWithHeaders(url.to_string(), headers)
+        }
+    }
+
+    pub fn from_filename(filename: &str, file_format: &str) -> Self {
+        Self {
+            file_format: file_format.to_string(),
+            page_type: PageType::Container(filename.to_string())
         }
     }
 }

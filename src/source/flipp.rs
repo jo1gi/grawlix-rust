@@ -1,7 +1,13 @@
 use std::collections::HashMap;
 
-use super::{ComicId, Request, Source, SourceResponse, Result, Error, first_capture};
-use crate::{comic::Page, metadata::Metadata, source::{resp_to_json, value_to_optstring}};
+use crate::{
+    source::{
+        Source, SourceResponse, Request, Result, Error, ComicId,
+        issue_id_match, resp_to_json, value_to_optstring, source_request
+    },
+    comic::Page,
+    metadata::Metadata,
+};
 use regex::Regex;
 use reqwest::Client;
 
@@ -13,16 +19,10 @@ impl Source for Flipp {
     }
 
     fn id_from_url(&self, url: &str) -> Result<ComicId> {
-        let error = Error::UrlNotSupported(url.to_string());
-        let issue_re = Regex::new(
-            r"https?://reader.flipp.dk/html5/reader/production/default.aspx\?pubname=&edid=([^/]+)"
-        ).unwrap();
-        let series_re = Regex::new(r"^https?://magasiner.flipp.dk/flipp/web-app/#/publications/([^/]+)").unwrap();
-        if issue_re.is_match(url) {
-            Ok(ComicId::Other(first_capture(issue_re, url).ok_or(error)?))
-        } else if series_re.is_match(url) {
-            Ok(ComicId::Series(first_capture(series_re, url).ok_or(error)?))
-        } else { Err(Error::UrlNotSupported(url.to_string())) }
+        issue_id_match!(url,
+            r"https?://reader.flipp.dk/html5/reader/production/default.aspx\?pubname=&edid=([^/]+)" => Other,
+            r"^https?://magasiner.flipp.dk/flipp/web-app/#/publications/([^/]+)" => Series
+        )
     }
 
     fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<Request<ComicId>> {
@@ -32,9 +32,9 @@ impl Source for Flipp {
                 "https://reader.flipp.dk/html5/reader/production/default.aspx?pubname=&edid={}",
                 eid
             );
-            Ok(Request {
-                requests: vec![client.get(url).build()?],
-                transform: Box::new(move |resp| {
+            source_request!(
+                requests: client.get(url),
+                transform: move |resp| {
                     let site = std::str::from_utf8(&resp[0]).ok()?;
                     let pubid_re = Regex::new("(?:publicationguid = \")([^\"]+)").unwrap();
                     let pubid = pubid_re.captures(site)?.get(1)?.as_str().to_string();
@@ -42,8 +42,8 @@ impl Source for Flipp {
                         "https://reader.flipp.dk/html5/reader/get_page_groups_from_eid.aspx?pubid={}&eid={}",
                         pubid, eid
                     )));
-                })
-            })
+                }
+            )
         } else { Err(Error::FailedResponseParse) }
     }
 
@@ -66,15 +66,10 @@ impl Source for Flipp {
                     ("os", "")
                 ]);
                 let series_id = x.to_string();
-                Ok(Request {
-                    // TODO Find better way to extract series data
-                    // Request all series data
-                    requests: vec![
-                        client.post("https://flippapi.egmontservice.com/api/signin")
-                            .json(&data)
-                            .build()?
-                    ],
-                    transform: Box::new(move |resp| {
+                source_request!(
+                    requests: client.post("https://flippapi.egmontservice.com/api/signin")
+                                .json(&data),
+                    transform: move |resp| {
                         let response_data: serde_json::Value = resp_to_json(&resp[0])?;
                         // Finding correct series
                         let series_data = response_data["publications"]
@@ -102,8 +97,8 @@ impl Source for Flipp {
                             })
                             .rev()
                             .collect::<Option<Vec<ComicId>>>()
-                    })
-                })
+                    }
+                )
             },
             _ => Err(Error::FailedResponseParse)
         }
@@ -119,10 +114,10 @@ impl Source for Flipp {
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
         if let ComicId::Issue(url) | ComicId::IssueWithMetadata(url, _) = comicid {
-            Ok(Request {
-                requests: vec![client.get(url).build()?],
-                transform: Box::new(response_to_pages)
-            })
+            source_request!(
+                requests: client.get(url),
+                transform: response_to_pages
+            )
         } else { Err(Error::FailedDownload(self.name())) }
     }
 

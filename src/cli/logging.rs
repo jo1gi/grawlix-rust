@@ -1,4 +1,4 @@
-use log::{Level, LevelFilter};
+use log::{Level, LevelFilter, Metadata};
 use colored::{Color, Colorize};
 
 /// Setup logging system
@@ -12,16 +12,18 @@ pub fn setup_logger(level: LevelFilter) -> Result<(), fern::InitError> {
             out.finish(format_args!(
                 "{:>12} {}",
                 first.bold().color(color),
-                rest
+                rest,
             ))
         })
         .level(level)
+        .filter(|metadata| metadata.level() != Level::Debug || filter_log_message(metadata))
         .chain(std::io::stderr())
         .apply()?;
     Ok(())
 }
 
-pub fn format_log_message(msg: String, level: Level) -> (String, String, Color) {
+
+fn format_log_message(msg: String, level: Level) -> (String, String, Color) {
     match level {
         Level::Error => ("ERROR".to_string(), msg, Color::Red),
         Level::Warn => ("WARNING".to_string(), msg, Color::Yellow),
@@ -41,6 +43,12 @@ pub fn format_log_message(msg: String, level: Level) -> (String, String, Color) 
 }
 
 
-pub fn error(msg: &str) {
-    println!("{:>12} {}", "Error".bold().red(), msg);
+/// Filter out log messages based on target
+fn filter_log_message(metadata: &Metadata) -> bool {
+    ![
+        "selectors::matching",
+        "html5ever::tokenizer",
+        "html5ever::tokenizer::char_ref",
+        "html5ever::tree_builder",
+    ].contains(&metadata.target())
 }

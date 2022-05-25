@@ -40,7 +40,7 @@ type Result<T> = std::result::Result<T, CliError>;
 async fn main() {
     match do_stuff().await {
         Ok(_) => (),
-        Err(e) => logging::error(&format!("{}", e))
+        Err(e) => error!("{}", e)
     }
 }
 
@@ -103,12 +103,6 @@ async fn do_stuff() -> Result<()> {
     } else {
         info!("Searching for comics");
         let inputs = load_inputs(&args.inputs).await?;
-        // Add metadata to comics
-        if !args.add_metadata.is_empty() {
-            let metadata = load_metadata(&args.add_metadata, &config).await.unwrap();
-            // TODO add metadata to comics
-            println!("{:#?}", metadata);
-        }
         inputs
     };
     write_comics(comics, &config).await
