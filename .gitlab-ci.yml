@@ -1,0 +1,32 @@
+image: "rust:latest"
+
+stages:
+  - test
+  - release
+
+test:cargo:
+  stage: test
+  script:
+    - rustc --version && cargo --version
+    - cargo test --workspace --verbose
+
+create_relase:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - cargo build --release
+  artifacts:
+    paths:
+      - target/release/grawlix-cli
+    expire_in: never
+  release:
+    name: "Release $CI_COMMIT_TAG"
+    tag_name: "$CI_COMMIT_TAG"
+    ref: "$CI_COMMIT_TAG"
+    description: "CI_COMMIT_MESSAGE"
+    assets:
+      links:
+        - name: "Linux executable"
+          url: "https://gitlab.com/jo1gi/grawlix/-/jobs/${CI_JOB_ID}/artifacts/file/target/release/grawlix-cli"
+      
