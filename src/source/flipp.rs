@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     source::{
         Source, SourceResponse, Request, Result, Error, ComicId,
-        issue_id_match, resp_to_json, value_to_optstring, source_request
+        utils::{self, issue_id_match, resp_to_json, value_to_optstring, source_request}
     },
     comic::Page,
     metadata::Metadata,
@@ -125,7 +125,7 @@ impl Source for Flipp {
 
 
 fn response_to_pages(responses: &[bytes::Bytes]) -> Option<Vec<Page>> {
-    super::resp_to_json::<serde_json::Value>(&responses[0])?["pageGroups"]
+    utils::resp_to_json::<serde_json::Value>(&responses[0])?["pageGroups"]
         .as_array()?
         .iter()
         .map(|x| {

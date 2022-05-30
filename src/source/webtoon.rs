@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use crate::{comic::Page, metadata::{Author, AuthorType, Metadata}, source::{
+use crate::{
+    comic::Page, metadata::{Author, AuthorType, Metadata},
+    source::{
         ComicId, Error, Request, Result, Source, SourceResponse,
-        issue_id_match,
-        tools::{source_request, first_text, ANDROID_USER_AGENT}
+        utils::{source_request, first_text, issue_id_match, ANDROID_USER_AGENT}
     }};
 use reqwest::{Client, header};
 use scraper::{Html, Selector};

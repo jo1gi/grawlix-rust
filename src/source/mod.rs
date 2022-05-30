@@ -1,5 +1,6 @@
 mod download;
-mod tools;
+/// Utility functions and macros for implementing `Source`
+mod utils;
 
 mod flipp;
 mod webtoon;
@@ -11,7 +12,6 @@ use crate::{
 };
 use reqwest::Client;
 pub use download::{download_comics, download_comics_metadata};
-use tools::{issue_id_match, source_request};
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
@@ -122,19 +122,4 @@ pub trait Source {
         Ok(())
     }
 
-}
-
-/// Converts binary response to json
-fn resp_to_json<'a, T: serde::Deserialize<'a>>(response: &'a [u8]) -> Option<T> {
-    serde_json::from_str(std::str::from_utf8(response).ok()?).ok()
-}
-
-/// Converts `serde_json::Value` to `Option<String>`
-fn value_to_optstring(value: &serde_json::Value) -> Option<String> {
-    value.as_str().map(|x| x.to_string())
-}
-
-/// Find first matching capture in regex
-fn first_capture(re: regex::Regex, text: &str) -> Option<String> {
-    Some(re.captures(text)?.get(1)?.as_str().to_string())
 }

@@ -1,4 +1,4 @@
-use super::{Result, Error, ComicId, first_capture};
+use super::{Result, Error, ComicId};
 
 /// User Agent of Chrome on Android
 pub const ANDROID_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 9; ASUS_X00TD; Flow) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/359.0.0.288 Mobile Safari/537.36";
@@ -17,7 +17,7 @@ pub const ANDROID_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 9; ASUS_X00TD;
 /// ```
 macro_rules! issue_id_match {
     ($url:expr, $($pattern:expr => $idtype:ident),+) => {
-        crate::source::tools::issue_id_match_internal($url, &[$(
+        crate::source::utils::issue_id_match_internal($url, &[$(
             ($pattern, Box::new(ComicId::$idtype)),
         )*])
     }
@@ -75,4 +75,19 @@ pub fn first_text(doc: &scraper::html::Html, selector: &str) -> Option<String> {
         .next()?
         .text().collect();
     return Some(text);
+}
+
+/// Converts binary response to json
+pub fn resp_to_json<'a, T: serde::Deserialize<'a>>(response: &'a [u8]) -> Option<T> {
+    serde_json::from_str(std::str::from_utf8(response).ok()?).ok()
+}
+
+/// Converts `serde_json::Value` to `Option<String>`
+pub fn value_to_optstring(value: &serde_json::Value) -> Option<String> {
+    value.as_str().map(|x| x.to_string())
+}
+
+/// Find first matching capture in regex
+pub fn first_capture(re: regex::Regex, text: &str) -> Option<String> {
+    Some(re.captures(text)?.get(1)?.as_str().to_string())
 }
