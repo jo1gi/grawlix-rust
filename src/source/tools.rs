@@ -69,7 +69,7 @@ macro_rules! source_request {
 }
 pub(super) use source_request;
 
-/// Extract the first element
+/// Extract text of the first html element matching the css selector.
 pub fn first_text(doc: &scraper::html::Html, selector: &str) -> Option<String> {
     let text = doc.select(&scraper::selector::Selector::parse(selector).unwrap())
         .next()?

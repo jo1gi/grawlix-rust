@@ -1,14 +1,10 @@
 use std::collections::HashMap;
 
-use crate::{
-    comic::Page,
-    metadata::Metadata,
-    source::{
+use crate::{comic::Page, metadata::{Author, AuthorType, Metadata}, source::{
         ComicId, Error, Request, Result, Source, SourceResponse,
         issue_id_match,
         tools::{source_request, first_text, ANDROID_USER_AGENT}
-    }
-};
+    }};
 use reqwest::{Client, header};
 use scraper::{Html, Selector};
 
@@ -85,7 +81,19 @@ fn parse_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
     Some(Metadata {
         title: first_text(&doc, ".subj_episode"),
         series: first_text(&doc, ".subj"),
+        authors: vec![find_author(&doc)?],
         ..Default::default()
+    })
+}
+
+fn find_author(doc: &Html) -> Option<Author> {
+    Some(Author {
+        name: doc.select(&Selector::parse(r#"meta[property="com-linewebtoon:episode:author"]"#).unwrap())
+            .next()?
+            .value()
+            .attr("content")?
+            .to_string(),
+        author_type: AuthorType::Writer
     })
 }
 
@@ -135,5 +143,17 @@ mod tests {
         let responses = std::fs::read("./tests/source_data/webtoon_issue.html").unwrap();
         let pages = super::response_to_pages(&[responses.into()]).unwrap();
         assert_eq!(pages.len(), 6);
+    }
+
+    #[test]
+    fn metadata() {
+        let responses = std::fs::read("./tests/source_data/webtoon_issue.html").unwrap();
+        let metadata = super::parse_metadata(&[responses.into()]).unwrap();
+        assert_eq!(
+            metadata.title,
+            Some("Ch. 1. The lost virtue of de-escalation".to_string())
+        );
+        assert_eq!(metadata.series, Some("The Weekly Roll".to_string()));
+        assert_eq!(&metadata.authors[0].name, "CME_T");
     }
 }
