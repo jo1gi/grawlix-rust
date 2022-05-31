@@ -3,6 +3,7 @@ mod download;
 mod utils;
 
 mod flipp;
+mod leagueoflegends;
 mod webtoon;
 
 use crate::{
@@ -11,7 +12,7 @@ use crate::{
     comic::Page
 };
 use reqwest::Client;
-pub use download::{download_comics, download_comics_metadata};
+pub use download::{download_comics, download_comics_metadata, create_default_client};
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
@@ -65,7 +66,8 @@ macro_rules! match_re {
 pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
     match_re!(url,
         "flipp.dk" => flipp::Flipp,
-        "webtoons.com" => webtoon::Webtoon
+        "webtoons.com" => webtoon::Webtoon,
+        "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends
     );
     Err(Error::UrlNotSupported(url.to_string()))
 }
@@ -78,7 +80,7 @@ pub trait Source {
 
     /// Create `reqwest::Client` to use for all requests generated from source
     fn create_client(&self) -> reqwest::Client {
-        reqwest::Client::new()
+        download::create_default_client()
     }
 
     /// Converts an url to `ComicId`

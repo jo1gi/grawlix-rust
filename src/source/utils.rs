@@ -55,7 +55,7 @@ macro_rules! source_request {
     // Multiple requests
     (requests: [$($request:expr),+], transform: $transform:expr) => {
         Ok::<_, crate::error::GrawlixDownloadError>(crate::source::Request {
-            requests: vec![$($request.build()?)*],
+            requests: vec![$($request.build()?,)*],
             transform: Box::new($transform)
         })
     };

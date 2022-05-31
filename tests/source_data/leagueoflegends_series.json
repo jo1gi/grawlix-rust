@@ -1,0 +1,472 @@
+{
+  "id": "sentinelsoflight",
+  "locale": "en_us",
+  "subject": "Sentinels of Light",
+  "name": "Steadfast Heart",
+  "description": "Love can build or break empires. With Viego’s Ruination corrupting Runeterra, the Sentinels of Light mount a desperate search for new members to fight the Ruined King.",
+  "header-image": {
+    "title": {},
+    "subtitle": "",
+    "description": "",
+    "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt6855cb0ae7e52ff8/60ee0c56b3f12e2b0efe98be/sentinels-series-header.jpg",
+    "encoding": "image/jpeg",
+    "width": 1920,
+    "height": 1080,
+    "x": 960,
+    "y": 350,
+    "featured-champions": []
+  },
+  "issues": [
+    {
+      "title": "Issue #1",
+      "id": "issue-1",
+      "index": 1,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "Separated by a millennium, personal tragedy draws Viego and Lucian to islands shrouded in mist and mystery.",
+      "url": "/en_us/comic/sentinelsoflight/issue-1",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt01c4d9e6a6291efc/60ee0c57b23973202c8a72ea/sentinels-1-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 569,
+        "height": 864,
+        "x": 0,
+        "y": 0,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt01c4d9e6a6291efc/60ee0c57b23973202c8a72ea/sentinels-1-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 569,
+        "height": 864,
+        "x": 0,
+        "y": 0,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #1",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Bruce Jackie of 2:10 Animation"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    },
+    {
+      "title": "Issue #2",
+      "id": "issue-2",
+      "index": 2,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "Viego and Lucian grapple with losing the loves of their lives. Will either find peace, or only ruin?",
+      "url": "/en_us/comic/sentinelsoflight/issue-2",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt8014183a92e4fa9c/60ee0c594253da270126dc3d/sentinels-2-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 569,
+        "height": 864,
+        "x": 450,
+        "y": 432,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt8014183a92e4fa9c/60ee0c594253da270126dc3d/sentinels-2-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 569,
+        "height": 864,
+        "x": 450,
+        "y": 432,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #2",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Bruce Jackie of 2:10 Animation"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    },
+    {
+      "title": "Issue #3",
+      "id": "issue-3",
+      "index": 3,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "As Ruination spreads across Runeterra, the Sentinels begin a quest for allies.",
+      "url": "/en_us/comic/sentinelsoflight/issue-3",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blte377ab81967d2b6f/61306fb69db95e7ff74b5bff/issue-3-cover.jpeg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blte377ab81967d2b6f/61306fb69db95e7ff74b5bff/issue-3-cover.jpeg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #3",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Bruce Jackie of 2:10 Animation"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    },
+    {
+      "title": "Issue #4",
+      "id": "issue-4",
+      "index": 4,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "Tension brews as the Sentinels recruit more allies and prepare to take on the Ruined King. Can this motley crew win this fight?",
+      "url": "/en_us/comic/sentinelsoflight/issue-4",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt3e0a391eba3e00e5/610af0c242ee276d28c756d2/issue-4-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt3e0a391eba3e00e5/610af0c242ee276d28c756d2/issue-4-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #4",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Bruce Jackie of 2:10 Animation"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    },
+    {
+      "title": "Issue #5",
+      "id": "issue-5",
+      "index": 5,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "Senna trains the new Sentinels of Light, as Lucian searches for the wielder of a legendary weapon in Shurima. Meanwhile, the Ruined King gains allies of his own.",
+      "url": "/en_us/comic/sentinelsoflight/issue-5",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt0f3fd05495a8b938/610af0c3547aba652817562a/sentinels-5-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt0f3fd05495a8b938/610af0c3547aba652817562a/sentinels-5-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #5",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Bruce Jackie of 2:10 Animation"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    },
+    {
+      "title": "Issue #6",
+      "id": "issue-6",
+      "index": 6,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "The final showdown between Light and Darkness — the fate of Runeterra lies in the balance!",
+      "url": "/en_us/comic/sentinelsoflight/issue-6",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt7f3dc8d1c2471a03/61306fb66768907ea9769239/sentinels-6-cover.jpeg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt7f3dc8d1c2471a03/61306fb66768907ea9769239/sentinels-6-cover.jpeg",
+        "encoding": "image/jpeg",
+        "width": 900,
+        "height": 1333,
+        "x": 450,
+        "y": 650,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #6",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Kyle Brightbill"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    }
+  ],
+  "featured-champions": []
+}

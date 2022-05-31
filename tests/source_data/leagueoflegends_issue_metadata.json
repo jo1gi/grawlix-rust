@@ -1,0 +1,165 @@
+{
+  "id": "sentinelsoflight-issue-1",
+  "locale": "en_us",
+  "series": {},
+  "comic-info": {
+    "title": "Issue #1",
+    "id": "issue-1",
+    "index": 1,
+    "type": "link-out",
+    "link-out-type": "comic",
+    "description": "Separated by a millennium, personal tragedy draws Viego and Lucian to islands shrouded in mist and mystery.",
+    "url": "/en_us/comic/sentinelsoflight/issue-1",
+    "background": {
+      "title": {},
+      "subtitle": "",
+      "description": "",
+      "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt01c4d9e6a6291efc/60ee0c57b23973202c8a72ea/sentinels-1-cover.jpg",
+      "encoding": "image/jpeg",
+      "width": 569,
+      "height": 864,
+      "x": 0,
+      "y": 0,
+      "featured-champions": []
+    },
+    "cover-image": {
+      "title": {},
+      "subtitle": "",
+      "description": "",
+      "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt01c4d9e6a6291efc/60ee0c57b23973202c8a72ea/sentinels-1-cover.jpg",
+      "encoding": "image/jpeg",
+      "width": 569,
+      "height": 864,
+      "x": 0,
+      "y": 0,
+      "featured-champions": []
+    },
+    "featured-champions": [],
+    "isFanArt": false,
+    "isComic": true,
+    "issue-title": "Steadfast Heart: Issue #1",
+    "credits": [
+      {
+        "credit-label": "Writer",
+        "credit-info": "Ian St. Martin"
+      },
+      {
+        "credit-label": "Storyboards",
+        "credit-info": "Huanmeng of 2:10 Animation"
+      },
+      {
+        "credit-label": "Inks",
+        "credit-info": "Linky of 2:10 Animation"
+      },
+      {
+        "credit-label": "Colors",
+        "credit-info": "Bruce Jackie of 2:10 Animation"
+      },
+      {
+        "credit-label": "Letterer (non-EU languages)",
+        "credit-info": "Tyler Smith of Comicraft"
+      },
+      {
+        "credit-label": "Letterer (EU languages)",
+        "credit-info": "Studio RAM"
+      },
+      {
+        "credit-label": "Editor",
+        "credit-info": "Molly Mahan"
+      },
+      {
+        "credit-label": "Associate Editor",
+        "credit-info": "Sabrina Futch"
+      },
+      {
+        "credit-label": "Art Producer",
+        "credit-info": "Joseph Li"
+      }
+    ]
+  },
+  "modules": [],
+  "nextContent": {
+    "label": "Read Next",
+    "data": {
+      "title": "Issue #2",
+      "id": "issue-2",
+      "index": 2,
+      "type": "link-out",
+      "link-out-type": "comic",
+      "description": "Viego and Lucian grapple with losing the loves of their lives. Will either find peace, or only ruin?",
+      "url": "/en_us/comic/sentinelsoflight/issue-2",
+      "background": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt8014183a92e4fa9c/60ee0c594253da270126dc3d/sentinels-2-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 569,
+        "height": 864,
+        "x": 450,
+        "y": 432,
+        "featured-champions": []
+      },
+      "cover-image": {
+        "title": {},
+        "subtitle": "",
+        "description": "",
+        "uri": "https://images.contentstack.io/v3/assets/blt187521ff0727be24/blt8014183a92e4fa9c/60ee0c594253da270126dc3d/sentinels-2-cover.jpg",
+        "encoding": "image/jpeg",
+        "width": 569,
+        "height": 864,
+        "x": 450,
+        "y": 432,
+        "featured-champions": []
+      },
+      "featured-champions": [],
+      "isFanArt": false,
+      "isComic": true,
+      "issue-title": "Steadfast Heart: Issue #2",
+      "credits": [
+        {
+          "credit-label": "Writer",
+          "credit-info": "Ian St. Martin"
+        },
+        {
+          "credit-label": "Storyboards",
+          "credit-info": "Huanmeng of 2:10 Animation"
+        },
+        {
+          "credit-label": "Inks",
+          "credit-info": "Linky of 2:10 Animation"
+        },
+        {
+          "credit-label": "Colors",
+          "credit-info": "Bruce Jackie of 2:10 Animation"
+        },
+        {
+          "credit-label": "Letterer (non-EU languages)",
+          "credit-info": "Tyler Smith of Comicraft"
+        },
+        {
+          "credit-label": "Letterer (EU languages)",
+          "credit-info": "Studio RAM"
+        },
+        {
+          "credit-label": "Editor",
+          "credit-info": "Molly Mahan"
+        },
+        {
+          "credit-label": "Associate Editor",
+          "credit-info": "Sabrina Futch"
+        },
+        {
+          "credit-label": "Art Producer",
+          "credit-info": "Joseph Li"
+        }
+      ]
+    }
+  },
+  "relatedContent": [
+    {
+      "label": "Related content",
+      "data": []
+    }
+  ]
+}

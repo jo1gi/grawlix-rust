@@ -1,0 +1,107 @@
+{
+  "title": "",
+  "id": "sentinelsoflight/issue-1",
+  "staging-date": "2021-06-30T00:00:00.000Z",
+  "desktop2PagePadding": 0,
+  "desktopVertPadding": 0,
+  "mobileVertPadding": 0,
+  "defaultDesktopMode": "VerticalScroll",
+  "creditsTopCopy": "SinglePage",
+  "desktop-pages": [
+    [
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_001-full.jpg?v=6e3475752950c9b0a68f940c6968c9a1",
+        "height": "19200",
+        "width": "1920",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_001-full@2x.jpg?v=43ddde501757b39f101981274db1a1a2",
+        "2x-width": "3840",
+        "2x-height": "38400"
+      }
+    ],
+    [
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_002.jpg?v=9b011e13dc996b5d60b220828c02c130",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_002@2x.jpg?v=25c9d1a38b3b4260a39f3cccc073eb6c",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      },
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_003.jpg?v=51ee9b7e9678df70f7c6ce9d46519006",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_003@2x.jpg?v=56035692174b3158b65925b0fdc89268",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      }
+    ],
+    [
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_004.jpg?v=aad57da0a308fec64a4a719c91e35cb9",
+        "height": "12144",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_004@2x.jpg?v=a2d881b7040e1e60b4de9b861fb5bd1b",
+        "2x-width": "2300",
+        "2x-height": "24288"
+      },
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_005.jpg?v=e027db8d074d27805204cf104894ecff",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_005@2x.jpg?v=c7cad422ec6b1f80e07a0203222790fa",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      }
+    ],
+    [
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_006.jpg?v=a0a84980e6a72d4587ad0154fe79e4cb",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_006@2x.jpg?v=41ce45aa3e75ac4555c1339eb514bfa3",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      },
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_007.jpg?v=d3447863a1d2be4f3088cdefc06663e0",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_007@2x.jpg?v=702a18f82f66699502a7e746e1fc1e57",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      }
+    ],
+    [
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_008.jpg?v=8ae801470112c500d7626923c364f06c",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_008@2x.jpg?v=03f92b60c8a3ed8fc0f247f42e0b3174",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      },
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_009.jpg?v=f6ec9ad2012af2ccfaaf7900fd6a1d4b",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_009@2x.jpg?v=20eec6100f437c199bef47f150cf9d99",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      }
+    ],
+    [
+      {
+        "uri": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_010.jpg?v=ef76344b132280fe5615c558168e7e93",
+        "height": "11483",
+        "width": "1150",
+        "2x": "https://universe-comics.leagueoflegends.com/comics/en_us/sentinelsoflight/issue-1/desktop/sentinelsoflight-01-en_us_010@2x.jpg?v=00493dd22bdd3a06f68cc87286d7c8c3",
+        "2x-width": "2300",
+        "2x-height": "22965"
+      }
+    ]
+  ],
+  "mobile-pages": [],
+  "credits": [],
+  "related-items": "https://universe-meeps.leagueoflegends.com/v1/en_us/comics/sentinelsoflight/issue-1/index.json"
+}

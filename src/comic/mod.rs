@@ -50,7 +50,7 @@ impl Comic {
     pub fn title<'a>(&'a self) -> &'a str {
         match &self.metadata.title {
             Some(title) => title,
-            None => "UNKOWN"
+            None => "UNKNOWN"
         }
     }
 

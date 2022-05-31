@@ -10,7 +10,7 @@ impl Comic {
 
     /// Write comic book to disk
     pub async fn write(&self, template: &str, comic_format: ComicFormat) -> Result<(), Error> {
-        let client = reqwest::Client::new();
+        let client = crate::source::create_default_client();
         let path = self.format(template)?;
         let mut comic_file = new_comic_file(&path, &comic_format)?;
         for (n, page) in self.pages.iter().enumerate() {

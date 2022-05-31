@@ -103,8 +103,8 @@ impl From<String> for AuthorType {
         match lower.as_str() {
             "writer" => AuthorType::Writer,
             "penciller" => AuthorType::Penciller,
-            "inker" => AuthorType::Inker,
-            "colorist" => AuthorType::Colorist,
+            "inks" | "inker" => AuthorType::Inker,
+            "colors" | "colorist" => AuthorType::Colorist,
             "letterer" => AuthorType::Letterer,
             "coverartist" => AuthorType::CoverArtist,
             "editor" => AuthorType::Editor,

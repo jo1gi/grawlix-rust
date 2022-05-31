@@ -4,8 +4,23 @@ use crate::{
 };
 use async_recursion::async_recursion;
 use futures::{StreamExt, TryStreamExt, stream};
-use reqwest::Client;
+use reqwest::{
+    Client,
+    header::{HeaderMap, HeaderValue}
+};
 use log::debug;
+
+pub fn create_default_client() -> reqwest::Client {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "User-Agent",
+        HeaderValue::from_static("grawlix")
+    );
+    Client::builder()
+        .default_headers(headers)
+        .build()
+        .unwrap()
+}
 
 pub async fn download_comics(url: &str) -> Result<Vec<Comic>> {
     let source = super::source_from_url(url)?;
