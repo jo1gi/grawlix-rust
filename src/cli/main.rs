@@ -133,7 +133,7 @@ async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
     // Download comics
     for comic in comics.iter() {
         info!("Downloading {}", comic.title());
-        comic.write(&config.output_template, grawlix::comic::ComicFormat::CBZ).await?;
+        comic.write(&config.output_template, &config.output_format).await?;
         progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
     Ok(())

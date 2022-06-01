@@ -13,6 +13,9 @@ pub struct Arguments {
     /// Logging level
     #[structopt(short, long, default_value="info")]
     pub log_level: log::LevelFilter,
+    /// Output format (Either cbz or dir)
+    #[structopt(long)]
+    pub output_format: Option<grawlix::comic::ComicFormat>
 }
 
 
@@ -20,6 +23,8 @@ pub struct Arguments {
 pub struct Config {
     #[serde(rename = "template", default = "default_template")]
     pub output_template: String,
+    #[serde(default = "Default::default")]
+    pub output_format: grawlix::comic::ComicFormat,
 }
 
 #[derive(Deserialize, Debug)]
@@ -57,7 +62,7 @@ macro_rules! args_into_config_opt {
                 Some(x) => $config.$path = x.clone(),
                 None => ()
             }
-        ),+
+        )+
     )
 }
 
@@ -74,7 +79,8 @@ macro_rules! args_into_config {
 pub fn load_options(args: &Arguments) -> Option<Config> {
     let mut config = load_config_from_file()?;
     args_into_config_opt!(args, config,
-        output_template
+        output_template,
+        output_format
     );
     return Some(config);
 }

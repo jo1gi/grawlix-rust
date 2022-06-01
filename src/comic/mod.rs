@@ -1,7 +1,7 @@
 mod format;
 pub mod read;
 mod write;
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
@@ -30,15 +30,31 @@ impl Container {
     }
 }
 
-#[derive(Debug)]
+#[derive(Deserialize, Debug, Clone)]
+/// Indicator for output format
 pub enum ComicFormat {
     CBZ,
+    Dir,
 }
 
-// async fn download_page(url: &str) -> bytes::Bytes {
-//     // TODO Remove unwrap
-//     client.get(url).send().await.unwrap().bytes().await.unwrap()
-// }
+impl Default for ComicFormat {
+    fn default() -> Self {
+        Self::CBZ
+    }
+}
+
+impl FromStr for ComicFormat {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "cbz" | "zip" => Ok(Self::CBZ),
+            "dir" | "folder" => Ok(Self::Dir),
+            _ => Err("Could not parse comic format type")
+        }
+    }
+}
+
 
 impl Comic {
     /// Create new default `Comic`
