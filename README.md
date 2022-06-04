@@ -19,4 +19,4 @@ Building requires the [rust](https://www.rust-lang.org/) compiler.
 ```shell
 grawlix <url>
 ```
-`url`can be a link to a specific comic or a series.
+`url` can be a link to a specific comic or a series.

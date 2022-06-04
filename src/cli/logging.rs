@@ -33,7 +33,7 @@ fn format_log_message(msg: String, level: Level) -> (String, String, Color) {
             let first_word = msg[..split].to_string();
             let rest = msg[split+1..].to_string();
             let color = match first_word.as_str() {
-                "Searching" | "Downloading" | "Loading" => Color::Blue,
+                "Searching" | "Downloading" | "Loading" | "Skipping" => Color::Blue,
                 "Found" | "Saved" => Color::Green,
                 _ => Color::BrightYellow,
             };
