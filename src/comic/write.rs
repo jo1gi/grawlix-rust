@@ -18,15 +18,15 @@ impl Comic {
             let page_data = match &page.page_type {
                 // TODO Remove unwraps
                 // Download page
-                PageType::Url(url) =>
-                    client.get(url)
-                        .send().await.unwrap()
-                        .bytes().await.unwrap(),
-                PageType::UrlWithHeaders(url, headers) =>
-                    client.get(url)
-                        .headers(headers.try_into().unwrap())
-                        .send().await.unwrap()
-                        .bytes().await.unwrap(),
+                PageType::Url(x) => x.download_page(&client).await,
+                    // client.get(url)
+                    //     .send().await.unwrap()
+                    //     .bytes().await.unwrap(),
+                // PageType::UrlWithHeaders(url, headers) =>
+                //     client.get(url)
+                //         .headers(headers.try_into().unwrap())
+                //         .send().await.unwrap()
+                //         .bytes().await.unwrap(),
                 // Skipping rewriting pages already stored in file
                 PageType::Container(_) => continue,
             };

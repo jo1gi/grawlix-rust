@@ -82,25 +82,57 @@ pub struct Page {
 #[derive(Debug, Deserialize, Serialize)]
 pub enum PageType {
     /// Page on website
-    Url(String),
-    /// Page on website with required headers
-    UrlWithHeaders(String, HashMap<String, String>),
+    Url(OnlinePage),
     /// Page in container
     Container(String),
+}
+
+/// Instructions on how to download a page
+#[derive(Default, Debug, Deserialize, Serialize)]
+pub struct OnlinePage {
+    /// Url of page
+    url: String,
+    /// Required headers for request
+    headers: Option<HashMap<String, String>>,
+    /// Encryption scheme of page
+    encryption: Option<PageEncryptionScheme>
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum PageEncryptionScheme {
+    XOR(Vec<u8>)
 }
 
 impl Page {
     pub fn from_url(url: &str, file_format: &str) -> Self {
         Self {
             file_format: file_format.to_string(),
-            page_type: PageType::Url(url.to_string())
+            page_type: PageType::Url(OnlinePage {
+                url: url.to_string(),
+                ..Default::default()
+            })
         }
     }
 
     pub fn from_url_with_headers(url: &str, headers: HashMap<String, String>, file_format: &str) -> Self {
         Self {
             file_format: file_format.to_string(),
-            page_type: PageType::UrlWithHeaders(url.to_string(), headers)
+            page_type: PageType::Url(OnlinePage {
+                url: url.to_string(),
+                headers: Some(headers),
+                encryption: None,
+            })
+        }
+    }
+
+    pub fn from_url_xor(url: &str, key: Vec<u8>, file_format: &str) -> Self {
+        Self {
+            file_format: file_format.to_string(),
+            page_type: PageType::Url(OnlinePage {
+                url: url.to_string(),
+                headers: None,
+                encryption: Some(PageEncryptionScheme::XOR(key))
+            })
         }
     }
 
@@ -108,6 +140,32 @@ impl Page {
         Self {
             file_format: file_format.to_string(),
             page_type: PageType::Container(filename.to_string())
+        }
+    }
+}
+
+impl OnlinePage {
+    pub async fn download_page(&self, client: &reqwest::Client) -> Vec<u8> {
+        let mut req = client.get(&self.url);
+        if let Some(headers) = &self.headers {
+            req = req.headers(headers.try_into().unwrap());
+        }
+        let resp = req.send().await.unwrap();
+        let bytes = resp.bytes().await.unwrap().as_ref().into();
+        match &self.encryption {
+            Some(enc) => decrypt_page(bytes, enc),
+            None => bytes
+        }
+    }
+}
+
+fn decrypt_page(bytes: Vec<u8>, enc: &PageEncryptionScheme) -> Vec<u8> {
+    match enc {
+        PageEncryptionScheme::XOR(key) => {
+            bytes.iter()
+                .zip(key.iter().cycle())
+                .map(|(v, k)| v ^ k)
+                .collect()
         }
     }
 }

@@ -4,6 +4,7 @@ mod utils;
 
 mod flipp;
 mod leagueoflegends;
+mod mangaplus;
 mod webtoon;
 
 use crate::{
@@ -67,7 +68,8 @@ pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
     match_re!(url,
         "flipp.dk" => flipp::Flipp,
         "webtoons.com" => webtoon::Webtoon,
-        "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends
+        "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends,
+        "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus
     );
     Err(Error::UrlNotSupported(url.to_string()))
 }
