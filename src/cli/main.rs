@@ -1,7 +1,7 @@
 mod options;
 mod logging;
 
-use std::{io::Write, process::exit};
+use std::{io::Write, process::exit, sync::{Arc, atomic::AtomicUsize}};
 
 use log::{info, error};
 use logging::setup_logger;
@@ -109,31 +109,42 @@ async fn do_stuff() -> Result<()> {
 }
 
 
-/// Download comics and write them to disk
-/// Will create a file with unfinished progress if a ctrl-c signal is recieved while running
-async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
-    info!("Found {} comics", comics.len());
-    // Save progress on ctrl-c
-    let comics = std::sync::Arc::new(comics);
-    let comics_c = comics.clone();
-    let progress = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    let progress_c = progress.clone();
+/// Setup thread that listens for and handles ctrl-c signal
+fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>) {
     tokio::spawn(async move {
         // Waiting for ctrl-c
         tokio::signal::ctrl_c().await.expect("failed to listen for event");
         // Creating file that describes the remainding progress
         let mut file = std::fs::File::create(PROGRESS_FILE).unwrap();
-        let rest = &comics_c[progress_c.load(std::sync::atomic::Ordering::Relaxed)..];
+        let rest = &comics[progress.load(std::sync::atomic::Ordering::Relaxed)..];
         match file.write_all(serde_json::to_string(rest).unwrap().as_bytes()) {
             Ok(_) => info!("Saved progress to .grawlix-progress"),
             Err(_) => error!("Could not save progress file ({})", PROGRESS_FILE)
         };
         exit(0);
     });
-    // Download comics
+}
+
+/// Download comics and write them to disk
+/// Will create a file with unfinished progress if a ctrl-c signal is recieved while running
+async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
+    info!("Found {} comics", comics.len());
+    // Save progress on ctrl-c
+    let comics = std::sync::Arc::new(comics);
+    let progress = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    setup_ctrlc(comics.clone(), progress.clone());
+    // Download each comic
     for comic in comics.iter() {
-        info!("Downloading {}", comic.title());
-        comic.write(&config.output_template, &config.output_format).await?;
+        // Creating output path
+        let path = comic.format(&config.output_template)?;
+        // Checking if file already exists if overwrite is not enabled
+        if !config.overwrite && std::path::Path::new(&path).exists() {
+            info!("Skipping {} (File already exists)", comic.title());
+        // Downloading comic
+        } else {
+            info!("Downloading {}", comic.title());
+            comic.write(&path, &config.output_format).await?;
+        }
         progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
     Ok(())

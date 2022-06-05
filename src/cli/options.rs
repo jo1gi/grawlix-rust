@@ -15,16 +15,24 @@ pub struct Arguments {
     pub log_level: log::LevelFilter,
     /// Output format (Either cbz or dir)
     #[structopt(long)]
-    pub output_format: Option<grawlix::comic::ComicFormat>
+    pub output_format: Option<grawlix::comic::ComicFormat>,
+    /// Overwrite already existing files
+    #[structopt(long)]
+    pub overwrite: bool,
 }
 
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
+    /// Template for output locations of comics
     #[serde(rename = "template", default = "default_template")]
     pub output_template: String,
+    /// File format for output comics
     #[serde(default = "Default::default")]
     pub output_format: grawlix::comic::ComicFormat,
+    /// Should overwrite already existing files if enabled
+    #[serde(default = "Default::default")]
+    pub overwrite: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -81,6 +89,9 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
     args_into_config_opt!(args, config,
         output_template,
         output_format
+    );
+    args_into_config!(args, config,
+        overwrite
     );
     return Some(config);
 }
