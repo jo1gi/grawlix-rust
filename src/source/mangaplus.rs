@@ -66,7 +66,8 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
 }
 
 fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
-    let title_re = Regex::new(r"\x17(.+)\x2a").unwrap();
+    // let title_re = Regex::new(r"\x17(.+)\x2a").unwrap();
+    let title_re = Regex::new(r#"#\d+".(.+)\x2a"#).unwrap();
     Some(Metadata {
         title: Some(std::str::from_utf8(title_re.captures(&resp[0])?.get(1)?.as_bytes())
             .ok()?.to_string()),
@@ -78,7 +79,7 @@ fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
 fn response_to_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
     // let url_regex = Regex::new(r"(?s:\x01(?P<url>.+)\x10.+\x01(?P<key>.{128})\x0a)").unwrap();
     let key_regex = Regex::new(r"\x01(?P<key>.{128})\x0a").unwrap();
-    let url_regex = Regex::new(r"\x01(?P<url>.+)\x10").unwrap();
+    let url_regex = Regex::new(r"\x01(?P<url>https://mangaplus.shueisha.co.jp/drm/title/.+)\x10").unwrap();
     url_regex.captures_iter(&resp[0])
         .zip(key_regex.captures_iter(&resp[0]))
         .map(|(url, key)| {
