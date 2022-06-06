@@ -1,14 +1,11 @@
 use regex::bytes::Regex;
 
-use crate::{
-    source::{
+use crate::{comic::Page, metadata::{Metadata, ReadingDirection}, source::{
         Source, ComicId, Result, Error, Request, SourceResponse,
         utils::{issue_id_match, source_request}
-    },
-    metadata::Metadata,
-    comic::Page,
-};
+    }};
 use reqwest::Client;
+
 
 pub struct MangaPlus;
 
@@ -19,19 +16,30 @@ impl Source for MangaPlus {
 
     fn id_from_url(&self, url: &str) -> Result<ComicId> {
         issue_id_match!(url,
-            r"viewer/(\d+)" => Issue
+            r"viewer/(\d+)" => Issue,
+            r"titles/(\d+)" => Series
         )
     }
 
     fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
-        todo!()
+        if let ComicId::Series(x) = seriesid {
+            source_request!(
+                requests: client.get(format!(
+                    "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=34&secret=243eb2b7776a8494c77c1de42bd45dfb", x
+                )),
+                transform: find_series_ids
+            )
+        } else { Err(Error::FailedResponseParse) }
     }
 
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
         if let ComicId::Issue(x) = comicid {
-            Ok(SourceResponse::Value(Metadata {
-                ..Default::default()
-            }))
+            Ok(SourceResponse::Request(source_request!(
+                requests: client.get(
+                    format!("https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high", x)
+                ),
+                transform: response_to_metadata
+            ).unwrap()))
         } else { Err(Error::FailedResponseParse) }
     }
 
@@ -45,6 +53,26 @@ impl Source for MangaPlus {
             )
         } else { Err(Error::FailedResponseParse) }
     }
+}
+
+fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
+    let url_re = Regex::new(r"chapter/(?P<id>(\d+))").unwrap();
+    url_re.captures_iter(&resp[0])
+        .map(|cap| {
+            let id = std::str::from_utf8(&cap["id"]).ok()?.to_string();
+            Some(ComicId::Issue(id))
+        })
+        .collect()
+}
+
+fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
+    let title_re = Regex::new(r"\x17(.+)\x2a").unwrap();
+    Some(Metadata {
+        title: Some(std::str::from_utf8(title_re.captures(&resp[0])?.get(1)?.as_bytes())
+            .ok()?.to_string()),
+        reading_direction: ReadingDirection::RightToLeft,
+        ..Default::default()
+    })
 }
 
 fn response_to_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
@@ -71,8 +99,23 @@ fn hex_to_bin(hex: &str) -> Option<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::source::{ComicId, Source};
+
 
     const HEXKEY: &str = "47ccd43a81558cfbd272a5d04d6233ad7cd56f790285f239103d0b6dd887959aff344ce7089a508d1650e6b45626934e528e61f5fbe17236efd2567543bb0c51";
+
+    #[test]
+    fn id() {
+        let source = super::MangaPlus;
+        assert_eq!(
+            source.id_from_url("https://mangaplus.shueisha.co.jp/viewer/1000486").unwrap(),
+            ComicId::Issue("1000486".to_string())
+        );
+        assert_eq!(
+            source.id_from_url("https://mangaplus.shueisha.co.jp/titles/100020").unwrap(),
+            ComicId::Series("100020".to_string())
+        );
+    }
 
     #[test]
     fn hex_to_bin() {
@@ -87,5 +130,20 @@ mod tests {
         let responses = std::fs::read("./tests/source_data/mangaplus_issue").unwrap();
         let pages = super::response_to_pages(&[responses.into()]).unwrap();
         assert_eq!(pages.len(), 53);
+    }
+
+    #[test]
+    fn metadata() {
+        let responses = std::fs::read("./tests/source_data/mangaplus_issue").unwrap();
+        let metadata = super::response_to_metadata(&[responses.into()]).unwrap();
+        assert_eq!(metadata.title, Some("Chapter 1: Romance Dawn".to_string()));
+    }
+
+    #[test]
+    fn series() {
+        let responses = std::fs::read("./tests/source_data/mangaplus_series").unwrap();
+        let issues = super::find_series_ids(&[responses.into()]).unwrap();
+        println!("{:#?}", issues);
+        assert_eq!(issues.len(), 1051);
     }
 }

@@ -30,7 +30,7 @@ pub fn issue_id_match_internal(url: &str, pairs: &[(&str, Box<dyn Fn(String) -> 
         let re = regex::Regex::new(pattern).unwrap();
         if re.is_match(url) {
             return Ok(id_type(
-                first_capture(re, url).ok_or(Error::UrlNotSupported(url.to_string()))?
+                first_capture(&re, url).ok_or(Error::UrlNotSupported(url.to_string()))?
             ));
         }
     }
@@ -88,6 +88,6 @@ pub fn value_to_optstring(value: &serde_json::Value) -> Option<String> {
 }
 
 /// Find first matching capture in regex
-pub fn first_capture(re: regex::Regex, text: &str) -> Option<String> {
+pub fn first_capture(re: &regex::Regex, text: &str) -> Option<String> {
     Some(re.captures(text)?.get(1)?.as_str().to_string())
 }
