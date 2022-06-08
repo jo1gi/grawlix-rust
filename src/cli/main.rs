@@ -8,29 +8,31 @@ use logging::setup_logger;
 use options::Config;
 use structopt::StructOpt;
 use thiserror::Error;
+use displaydoc::Display;
 use grawlix::{
     error::GrawlixIOError,
     comic::Comic,
-    metadata::Metadata,
-    source::{Source, download_comics, download_comics_metadata}
+    source::download_comics
 };
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Display)]
 /// Errors for Grawlix cli
 pub enum CliError {
-    #[error("Invalid input: {0}. Could not parse it as an url or a path")]
+    /// Invalid input: {0}. Could not parse it as an url or a path
     Input(String),
-    #[error(transparent)]
+    /// Could not find file: {0}
+    FileNotFound(String),
+    /// {0}
     Write(#[from] grawlix::error::GrawlixIOError),
-    #[error(transparent)]
+    /// {0}
     Download(#[from] grawlix::error::GrawlixDownloadError),
-    #[error("Could not create credentials from input")]
+    /// Could not create credentials from input
     InvalidCredentials,
-    #[error("No Credentials found for source {0}")]
+    /// No Credentials found for source {0}
     MissingCredentials(String),
-    #[error(transparent)]
+    /// {0}
     LogError(#[from] fern::InitError),
-    #[error("Unknown error occurred")]
+    /// Unknown error occurred
     Unknown,
 }
 
@@ -61,34 +63,45 @@ async fn load_inputs(inputs: &[String]) -> Result<Vec<Comic>> {
     return Ok(comics);
 }
 
-async fn create_authenticated_source(url: &str, _config: &Config) -> Result<Box<dyn Source>> {
-    let source = grawlix::source::source_from_url(url)
-        .or(Err(CliError::Input(url.to_string())))?;
-    match source.name() {
-        _ => Err(CliError::MissingCredentials(source.name()))
-    }
-}
-
-async fn load_metadata(inputs: &[String], config: &Config) -> Result<Vec<Metadata>> {
-    let mut all_metadata = Vec::new();
-    for i in inputs {
-        let mut source = create_authenticated_source(i, config).await?;
-        all_metadata.append(&mut download_comics_metadata(&mut source, i).await.unwrap());
-    }
-    // TODO sort metadata
-    Ok(all_metadata)
-}
-
 const PROGRESS_FILE: &str = ".grawlix-progress";
 
 async fn do_stuff() -> Result<()> {
     // Loading options
     let args = options::Arguments::from_args();
-    let config = options::load_options(&args).unwrap();
+    let config: Config = options::load_options(&args).unwrap();
     setup_logger(args.log_level)?;
-    // Loading comics
+    // Downloading comics
+    let comics = get_comics(&args).await?;
+    write_comics(comics, &config).await
+}
+
+fn load_links_from_file(link_file: &std::path::PathBuf) -> Result<Vec<String>> {
+    if link_file.exists() {
+        let links = std::fs::read_to_string(link_file)
+            .map_err(|x| GrawlixIOError::from(x))?
+            .lines()
+            .map(String::from)
+            .collect();
+        Ok(links)
+    } else {
+        Err(CliError::FileNotFound(link_file.to_str().ok_or(CliError::Unknown)?.to_string()))
+    }
+}
+
+/// Return all links from arguments, files, and pipe
+fn get_all_links(args: &options::Arguments) -> Result<Vec<String>> {
+    let mut x = args.inputs.clone();
+    if let Some(link_file) = &args.file {
+        x.append(&mut load_links_from_file(link_file)?);
+    }
+    return Ok(x);
+}
+
+
+/// Returns a list of comics based on arguments
+async fn get_comics(args: &options::Arguments) -> Result<Vec<Comic>> {
     let progress_file =  std::path::Path::new(PROGRESS_FILE);
-    let comics = if progress_file.exists() {
+    if progress_file.exists() {
         info!("Loading progress file");
         // Loading unfinished progress from last run of program
         let comics = serde_json::from_str(
@@ -99,15 +112,12 @@ async fn do_stuff() -> Result<()> {
             Ok(_) => (),
             Err(_) => error!("Could not remove progress file ({})", PROGRESS_FILE)
         }
-        comics
+        Ok(comics)
     } else {
         info!("Searching for comics");
-        let inputs = load_inputs(&args.inputs).await?;
-        inputs
-    };
-    write_comics(comics, &config).await
+        Ok(load_inputs(&get_all_links(args)?).await?)
+    }
 }
-
 
 /// Setup thread that listens for and handles ctrl-c signal
 fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>) {

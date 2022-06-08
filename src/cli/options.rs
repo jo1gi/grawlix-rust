@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use structopt::StructOpt;
 use serde::Deserialize;
 use grawlix::source::Credentials;
@@ -19,10 +20,13 @@ pub struct Arguments {
     /// Overwrite already existing files
     #[structopt(long)]
     pub overwrite: bool,
+    /// Path of file containing input urls
+    #[structopt(short, long)]
+    pub file: Option<PathBuf>,
 }
 
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Config {
     /// Template for output locations of comics
     #[serde(rename = "template", default = "default_template")]
