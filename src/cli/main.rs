@@ -120,7 +120,8 @@ async fn get_comics(args: &options::Arguments) -> Result<Vec<Comic>> {
 }
 
 /// Setup thread that listens for and handles ctrl-c signal
-fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>) {
+fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>, config: &Config) {
+    let output_template = config.output_template.clone();
     tokio::spawn(async move {
         // Waiting for ctrl-c
         tokio::signal::ctrl_c().await.expect("failed to listen for event");
@@ -131,6 +132,19 @@ fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>) {
             Ok(_) => info!("Saved progress to .grawlix-progress"),
             Err(_) => error!("Could not save progress file ({})", PROGRESS_FILE)
         };
+        // Removing up unfinished file
+        let unfinished_path = rest.get(0)
+            .map(|x| x.format(&output_template).ok())
+            .flatten();
+        if let Some(x) = unfinished_path {
+            match std::fs::remove_file(&x) {
+                Ok(_) => (),
+                Err(_) => error!(
+                    "Could not remove unfinished file from downloading: {}",
+                    &x
+                )
+            }
+        }
         exit(0);
     });
 }
@@ -142,7 +156,7 @@ async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
     // Save progress on ctrl-c
     let comics = std::sync::Arc::new(comics);
     let progress = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    setup_ctrlc(comics.clone(), progress.clone());
+    setup_ctrlc(comics.clone(), progress.clone(), config);
     // Download each comic
     for comic in comics.iter() {
         // Creating output path
