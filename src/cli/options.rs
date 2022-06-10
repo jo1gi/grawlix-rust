@@ -19,13 +19,16 @@ pub struct Arguments {
     pub output_format: Option<grawlix::comic::ComicFormat>,
     /// Overwrite already existing files
     #[structopt(long)]
-    pub overwrite: Option<bool>,
+    pub overwrite: bool,
     /// Path of file containing input urls
     #[structopt(short, long)]
     pub file: Option<PathBuf>,
     /// Save progress when pressing ctrl-c and continue download if progress file exists
     #[structopt(long, name = "continue")]
-    pub use_progress_file: Option<bool>,
+    pub use_progress_file: bool,
+    /// Print extra information to stdout
+    #[structopt(long)]
+    pub info: bool,
 }
 
 
@@ -43,6 +46,9 @@ pub struct Config {
     /// Save progress when pressing ctrl-c and continue download if progress file exists
     #[serde(rename = "continue", default = "Default::default")]
     pub use_progress_file: bool,
+    /// Print extra information to stdout
+    #[serde(default = "Default::default")]
+    pub info: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -73,7 +79,7 @@ fn load_config_from_file() -> Option<Config> {
     toml::from_str(&config).ok()
 }
 
-macro_rules! args_into_config {
+macro_rules! args_into_config_opt {
     ($args:expr, $config:expr, $($path:ident),+) => (
         $(
             match &$args.$path {
@@ -84,14 +90,27 @@ macro_rules! args_into_config {
     )
 }
 
+macro_rules! args_into_config_bool {
+    ($args:expr, $config:expr, $($path:ident),+) => (
+        $(
+            if $args.$path {
+                $config.$path = true;
+            }
+        )+
+    )
+}
+
 /// Loads options from config file and command line arguments
 pub fn load_options(args: &Arguments) -> Option<Config> {
     let mut config = load_config_from_file()?;
-    args_into_config!(args, config,
+    args_into_config_opt!(args, config,
         output_template,
-        output_format,
+        output_format
+    );
+    args_into_config_bool!(args, config,
+        overwrite,
         use_progress_file,
-        overwrite
+        info
     );
     return Some(config);
 }

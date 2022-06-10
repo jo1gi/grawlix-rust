@@ -169,6 +169,9 @@ async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
         // Downloading comic
         } else {
             info!("Downloading {}", comic.title());
+            if config.info {
+                logging::print_comic(comic);
+            }
             comic.write(&path, &config.output_format).await?;
         }
         progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);

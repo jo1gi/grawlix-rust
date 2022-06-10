@@ -52,3 +52,8 @@ fn filter_log_message(metadata: &Metadata) -> bool {
         "html5ever::tree_builder",
     ].contains(&metadata.target())
 }
+
+/// Prints a comic book to stdout
+pub fn print_comic(comic: &grawlix::comic::Comic) {
+    println!("{}", comic.title().bold().cyan());
+}
