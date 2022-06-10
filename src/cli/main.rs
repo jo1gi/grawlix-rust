@@ -71,7 +71,7 @@ async fn do_stuff() -> Result<()> {
     let config: Config = options::load_options(&args).unwrap();
     setup_logger(args.log_level)?;
     // Downloading comics
-    let comics = get_comics(&args).await?;
+    let comics = get_comics(&args, &config).await?;
     write_comics(comics, &config).await
 }
 
@@ -99,9 +99,9 @@ fn get_all_links(args: &options::Arguments) -> Result<Vec<String>> {
 
 
 /// Returns a list of comics based on arguments
-async fn get_comics(args: &options::Arguments) -> Result<Vec<Comic>> {
+async fn get_comics(args: &options::Arguments, config: &Config) -> Result<Vec<Comic>> {
     let progress_file =  std::path::Path::new(PROGRESS_FILE);
-    if progress_file.exists() {
+    if config.use_progress_file && progress_file.exists() {
         info!("Loading progress file");
         // Loading unfinished progress from last run of program
         let comics = serde_json::from_str(
@@ -156,7 +156,9 @@ async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
     // Save progress on ctrl-c
     let comics = std::sync::Arc::new(comics);
     let progress = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    setup_ctrlc(comics.clone(), progress.clone(), config);
+    if config.use_progress_file {
+        setup_ctrlc(comics.clone(), progress.clone(), config);
+    }
     // Download each comic
     for comic in comics.iter() {
         // Creating output path

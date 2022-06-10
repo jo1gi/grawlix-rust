@@ -3,8 +3,8 @@ use structopt::StructOpt;
 use serde::Deserialize;
 use grawlix::source::Credentials;
 
-#[derive(StructOpt, Debug)]
 /// Command line comic book tool
+#[derive(StructOpt, Debug)]
 pub struct Arguments {
     /// Path or link to comic book
     pub inputs: Vec<String>,
@@ -19,10 +19,13 @@ pub struct Arguments {
     pub output_format: Option<grawlix::comic::ComicFormat>,
     /// Overwrite already existing files
     #[structopt(long)]
-    pub overwrite: bool,
+    pub overwrite: Option<bool>,
     /// Path of file containing input urls
     #[structopt(short, long)]
     pub file: Option<PathBuf>,
+    /// Save progress when pressing ctrl-c and continue download if progress file exists
+    #[structopt(long, name = "continue")]
+    pub use_progress_file: Option<bool>,
 }
 
 
@@ -37,6 +40,9 @@ pub struct Config {
     /// Should overwrite already existing files if enabled
     #[serde(default = "Default::default")]
     pub overwrite: bool,
+    /// Save progress when pressing ctrl-c and continue download if progress file exists
+    #[serde(rename = "continue", default = "Default::default")]
+    pub use_progress_file: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -67,7 +73,7 @@ fn load_config_from_file() -> Option<Config> {
     toml::from_str(&config).ok()
 }
 
-macro_rules! args_into_config_opt {
+macro_rules! args_into_config {
     ($args:expr, $config:expr, $($path:ident),+) => (
         $(
             match &$args.$path {
@@ -78,23 +84,13 @@ macro_rules! args_into_config_opt {
     )
 }
 
-#[allow(unused_macros)]
-macro_rules! args_into_config {
-    ($args:expr, $config:expr, $($path:ident),+) => (
-        $(
-            $config.$path = $args.$path.clone();
-        ),+
-    )
-}
-
 /// Loads options from config file and command line arguments
 pub fn load_options(args: &Arguments) -> Option<Config> {
     let mut config = load_config_from_file()?;
-    args_into_config_opt!(args, config,
-        output_template,
-        output_format
-    );
     args_into_config!(args, config,
+        output_template,
+        output_format,
+        use_progress_file,
         overwrite
     );
     return Some(config);
