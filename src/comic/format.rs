@@ -116,8 +116,8 @@ fn comic_options(comic: &Comic) -> HashMap<&str, Variant> {
         ("coverartist", Variant::string(&get_first_author(&meta.authors, AuthorType::CoverArtist))),
         ("editor", Variant::string(&get_first_author(&meta.authors, AuthorType::Editor))),
         ("pages", Some(Variant::Int(comic.pages.len() as u32))),
-    ].iter()
-        .filter_map(|(k, v)| v.as_ref().map(|x| (*k, x.clone(), )))
+    ].into_iter()
+        .map(|(k, v)| (k, v.unwrap_or(Variant::String("Unknown".to_string()))))
         .collect()
 }
 
