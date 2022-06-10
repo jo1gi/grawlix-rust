@@ -72,7 +72,11 @@ async fn do_stuff() -> Result<()> {
     setup_logger(args.log_level)?;
     // Downloading comics
     let comics = get_comics(&args, &config).await?;
-    write_comics(comics, &config).await
+    info!("Found {} comics", comics.len());
+    if comics.len() > 0 {
+        write_comics(comics, &config).await?;
+    }
+    Ok(())
 }
 
 fn load_links_from_file(link_file: &std::path::PathBuf) -> Result<Vec<String>> {
@@ -114,8 +118,13 @@ async fn get_comics(args: &options::Arguments, config: &Config) -> Result<Vec<Co
         }
         Ok(comics)
     } else {
-        info!("Searching for comics");
-        Ok(load_inputs(&get_all_links(args)?).await?)
+        let links = get_all_links(args)?;
+        if links.len() > 0 {
+            info!("Searching for comics");
+            Ok(load_inputs(&links).await?)
+        } else {
+            Ok(Vec::new())
+        }
     }
 }
 
@@ -152,7 +161,6 @@ fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>, config: &Con
 /// Download comics and write them to disk
 /// Will create a file with unfinished progress if a ctrl-c signal is recieved while running
 async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
-    info!("Found {} comics", comics.len());
     // Save progress on ctrl-c
     let comics = std::sync::Arc::new(comics);
     let progress = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
