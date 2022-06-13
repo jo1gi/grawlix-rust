@@ -2,7 +2,7 @@ use regex::bytes::Regex;
 
 use crate::{comic::Page, metadata::{Metadata, ReadingDirection}, source::{
         Source, ComicId, Result, Error, Request, SourceResponse,
-        utils::{issue_id_match, source_request}
+        utils::{issue_id_match, source_request, first_capture_bin}
     }};
 use reqwest::Client;
 
@@ -69,9 +69,13 @@ fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
     // let title_re = Regex::new(r"\x17(.+)\x2a").unwrap();
     let title_re = Regex::new(r#"#\d+".(.+)\x2a"#).unwrap();
     Some(Metadata {
-        title: Some(std::str::from_utf8(title_re.captures(&resp[0])?.get(1)?.as_bytes())
-            .ok()?.to_string()),
+        title: first_capture_bin(&title_re, &resp[0]),
+        series: first_capture_bin(&Regex::new(r#"MANGA_Plus (.+)\x12"#).unwrap(), &resp[0]),
         reading_direction: ReadingDirection::RightToLeft,
+        issue_number: first_capture_bin(&Regex::new(r#"#(\d+)"#).unwrap(), &resp[0])
+            .map(|s| s.parse::<u32>().ok())
+            .flatten(),
+        source: Some("Manga Plus".to_string()),
         ..Default::default()
     })
 }
@@ -100,7 +104,7 @@ fn hex_to_bin(hex: &str) -> Option<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::{ComicId, Source};
+    use crate::{metadata::ReadingDirection, source::{ComicId, Source}};
 
 
     const HEXKEY: &str = "47ccd43a81558cfbd272a5d04d6233ad7cd56f790285f239103d0b6dd887959aff344ce7089a508d1650e6b45626934e528e61f5fbe17236efd2567543bb0c51";
@@ -137,7 +141,14 @@ mod tests {
     fn metadata() {
         let responses = std::fs::read("./tests/source_data/mangaplus_issue").unwrap();
         let metadata = super::response_to_metadata(&[responses.into()]).unwrap();
-        assert_eq!(metadata.title, Some("Chapter 1: Romance Dawn".to_string()));
+        assert_eq!(metadata, crate::metadata::Metadata {
+            title: Some("Chapter 1: Romance Dawn".to_string()),
+            series: Some("One Piece".to_string()),
+            issue_number: Some(1),
+            reading_direction: ReadingDirection::RightToLeft,
+            source: Some("Manga Plus".to_string()),
+            ..Default::default()
+        });
     }
 
     #[test]

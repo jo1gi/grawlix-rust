@@ -137,6 +137,7 @@ fn response_to_metadata(responses: &[bytes::Bytes]) -> Option<Metadata> {
             })
             .filter(|author| author.author_type != AuthorType::Other)
             .collect(),
+        source: Some("League of Legends".to_string()),
         ..Default::default()
     })
 }
@@ -162,6 +163,7 @@ mod tests {
                     Author { name: "Bruce Jackie of 2:10 Animation".to_string(), author_type: AuthorType::Colorist },
                     Author { name: "Molly Mahan".to_string(), author_type: AuthorType::Editor },
                 ],
+                source: Some("League of Legends".to_string()),
                 ..Default::default()
             }
         )

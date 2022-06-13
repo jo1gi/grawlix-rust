@@ -28,7 +28,11 @@ pub struct Metadata {
     /// Reading Direction
     pub reading_direction: ReadingDirection,
     /// Database identifiers
-    pub identifiers: Vec<Identifier>
+    pub identifiers: Vec<Identifier>,
+    /// Description
+    pub description: Option<String>,
+    /// The source the comic has been downloaded from
+    pub source: Option<String>,
 }
 
 impl Metadata {

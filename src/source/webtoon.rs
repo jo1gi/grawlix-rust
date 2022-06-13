@@ -4,7 +4,7 @@ use crate::{
     comic::Page, metadata::{Author, AuthorType, Metadata},
     source::{
         ComicId, Error, Request, Result, Source, SourceResponse,
-        utils::{source_request, first_text, issue_id_match, ANDROID_USER_AGENT}
+        utils::{source_request, first_text, first_attr, issue_id_match, ANDROID_USER_AGENT}
     }};
 use reqwest::{Client, header};
 use scraper::{Html, Selector};
@@ -83,6 +83,8 @@ fn parse_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
         title: first_text(&doc, ".subj_episode"),
         series: first_text(&doc, ".subj"),
         authors: vec![find_author(&doc)?],
+        description: first_attr(&doc, r#"meta[property="og:description"]"#, "content"),
+        source: Some("Webtoon".to_string()),
         ..Default::default()
     })
 }
@@ -113,7 +115,7 @@ fn response_to_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::{ComicId, Source};
+    use crate::{metadata::Author, source::{ComicId, Source}};
 
     #[test]
     fn issue_id() {
@@ -151,10 +153,17 @@ mod tests {
         let responses = std::fs::read("./tests/source_data/webtoon_issue.html").unwrap();
         let metadata = super::parse_metadata(&[responses.into()]).unwrap();
         assert_eq!(
-            metadata.title,
-            Some("Ch. 1. The lost virtue of de-escalation".to_string())
+            metadata,
+            crate::metadata::Metadata {
+                title: Some("Ch. 1. The lost virtue of de-escalation".to_string()),
+                series: Some("The Weekly Roll".to_string()),
+                authors: vec![
+                    Author { name: "CME_T".to_string(), author_type: crate::metadata::AuthorType::Writer }
+                ],
+                description: Some("A weekly four-panel comic strip that follows the exploits of a party of adventurers as they walk the fine line between being the good guys and homeless psychopaths for hire. \n\nUpdates every Weekend".to_string()),
+                source: Some("Webtoon".to_string()),
+                ..Default::default()
+            }
         );
-        assert_eq!(metadata.series, Some("The Weekly Roll".to_string()));
-        assert_eq!(&metadata.authors[0].name, "CME_T");
     }
 }

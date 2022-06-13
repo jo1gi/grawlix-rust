@@ -87,6 +87,7 @@ impl Source for Flipp {
                                 let metadata = Metadata {
                                     title: Some(format!("{} {}", series_name, &issue["issueName"].as_str()?)),
                                     series: Some(series_name.to_string()),
+                                    source: Some("Flipp".to_string()),
                                     ..Default::default()
                                 };
                                 let data_url = format!(

@@ -77,6 +77,16 @@ pub fn first_text(doc: &scraper::html::Html, selector: &str) -> Option<String> {
     return Some(text);
 }
 
+
+/// Extract atrr of the first html element matching the css selector.
+pub fn first_attr(doc: &scraper::html::Html, selector: &str, attr: &str) -> Option<String> {
+   Some(doc.select(&scraper::selector::Selector::parse(selector).unwrap())
+        .next()?
+        .value()
+        .attr(attr)?
+        .to_string())
+}
+
 /// Converts binary response to json
 pub fn resp_to_json<'a, T: serde::Deserialize<'a>>(response: &'a [u8]) -> Option<T> {
     serde_json::from_str(std::str::from_utf8(response).ok()?).ok()
@@ -90,4 +100,11 @@ pub fn value_to_optstring(value: &serde_json::Value) -> Option<String> {
 /// Find first matching capture in regex
 pub fn first_capture(re: &regex::Regex, text: &str) -> Option<String> {
     Some(re.captures(text)?.get(1)?.as_str().to_string())
+}
+
+/// Find first matching capture in binry regex and convert it to string
+pub fn first_capture_bin(re: &regex::bytes::Regex, input: &[u8]) -> Option<String> {
+    let capture = re.captures(input)?.get(1)?.as_bytes();
+    let value = std::str::from_utf8(capture).ok()?;
+    Some(value.to_string())
 }
