@@ -55,5 +55,5 @@ fn filter_log_message(metadata: &Metadata) -> bool {
 
 /// Prints a comic book to stdout
 pub fn print_comic(comic: &grawlix::comic::Comic) {
-    println!("{}", comic.title().bold().cyan());
+    println!("{}", comic.title().bold());
 }

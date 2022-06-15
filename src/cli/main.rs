@@ -5,7 +5,7 @@ use std::{io::Write, process::exit, sync::{Arc, atomic::AtomicUsize}};
 
 use log::{info, error};
 use logging::setup_logger;
-use options::Config;
+use options::{Arguments, Command, Config};
 use structopt::StructOpt;
 use thiserror::Error;
 use displaydoc::Display;
@@ -36,14 +36,47 @@ pub enum CliError {
     Unknown,
 }
 
+const PROGRESS_FILE: &str = ".grawlix-progress";
+
 type Result<T> = std::result::Result<T, CliError>;
 
 #[tokio::main]
 async fn main() {
-    match do_stuff().await {
+    match run().await {
         Ok(_) => (),
         Err(e) => error!("{}", e)
     }
+}
+
+async fn run() -> Result<()> {
+    // Loading options
+    let args = Arguments::from_args();
+    let config: Config = options::load_options(&args).unwrap();
+    setup_logger(args.log_level)?;
+    match &args.cmd {
+        Command::Download{ inputs } => download(&args, &config, inputs).await,
+        Command::List { inputs } => list(&args, &config, inputs).await
+    }
+}
+
+
+/// Download comics
+async fn download(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
+    let comics = get_comics(args, config, inputs).await?;
+    info!("Found {} comics", comics.len());
+    if comics.len() > 0 {
+        write_comics(comics, config).await?;
+    }
+    Ok(())
+}
+
+/// Print comics to stdout
+async fn list(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
+    let comics = get_comics(args, config, inputs).await?;
+    for comic in comics {
+        logging::print_comic(&comic);
+    }
+    Ok(())
 }
 
 /// Create vector of comics from list of inputs
@@ -63,21 +96,6 @@ async fn load_inputs(inputs: &[String]) -> Result<Vec<Comic>> {
     return Ok(comics);
 }
 
-const PROGRESS_FILE: &str = ".grawlix-progress";
-
-async fn do_stuff() -> Result<()> {
-    // Loading options
-    let args = options::Arguments::from_args();
-    let config: Config = options::load_options(&args).unwrap();
-    setup_logger(args.log_level)?;
-    // Downloading comics
-    let comics = get_comics(&args, &config).await?;
-    info!("Found {} comics", comics.len());
-    if comics.len() > 0 {
-        write_comics(comics, &config).await?;
-    }
-    Ok(())
-}
 
 fn load_links_from_file(link_file: &std::path::PathBuf) -> Result<Vec<String>> {
     if link_file.exists() {
@@ -93,8 +111,8 @@ fn load_links_from_file(link_file: &std::path::PathBuf) -> Result<Vec<String>> {
 }
 
 /// Return all links from arguments, files, and pipe
-fn get_all_links(args: &options::Arguments) -> Result<Vec<String>> {
-    let mut x = args.inputs.clone();
+fn get_all_links(args: &options::Arguments, inputs: &Vec<String>) -> Result<Vec<String>> {
+    let mut x = inputs.clone();
     if let Some(link_file) = &args.file {
         x.append(&mut load_links_from_file(link_file)?);
     }
@@ -103,7 +121,7 @@ fn get_all_links(args: &options::Arguments) -> Result<Vec<String>> {
 
 
 /// Returns a list of comics based on arguments
-async fn get_comics(args: &options::Arguments, config: &Config) -> Result<Vec<Comic>> {
+async fn get_comics(args: &options::Arguments, config: &Config, inputs: &Vec<String>) -> Result<Vec<Comic>> {
     let progress_file =  std::path::Path::new(PROGRESS_FILE);
     if config.use_progress_file && progress_file.exists() {
         info!("Loading progress file");
@@ -118,7 +136,7 @@ async fn get_comics(args: &options::Arguments, config: &Config) -> Result<Vec<Co
         }
         Ok(comics)
     } else {
-        let links = get_all_links(args)?;
+        let links = get_all_links(args, inputs)?;
         if links.len() > 0 {
             info!("Searching for comics");
             Ok(load_inputs(&links).await?)

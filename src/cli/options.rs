@@ -4,31 +4,46 @@ use serde::Deserialize;
 use grawlix::source::Credentials;
 
 /// Command line comic book tool
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 pub struct Arguments {
-    /// Path or link to comic book
-    pub inputs: Vec<String>,
     /// Output template
-    #[structopt(short, long)]
+    #[structopt(short, long, global = true)]
     pub output_template: Option<String>,
     /// Logging level
-    #[structopt(short, long, default_value="info")]
+    #[structopt(short, long, default_value="info", global = true)]
     pub log_level: log::LevelFilter,
     /// Output format (Either cbz or dir)
-    #[structopt(long)]
+    #[structopt(long, global = true)]
     pub output_format: Option<grawlix::comic::ComicFormat>,
     /// Overwrite already existing files
-    #[structopt(long)]
+    #[structopt(long, global = true)]
     pub overwrite: bool,
     /// Path of file containing input urls
-    #[structopt(short, long)]
+    #[structopt(short, long, global = true)]
     pub file: Option<PathBuf>,
     /// Save progress when pressing ctrl-c and continue download if progress file exists
-    #[structopt(long, name = "continue")]
+    #[structopt(long, name = "continue", global = true)]
     pub use_progress_file: bool,
     /// Print extra information to stdout
-    #[structopt(long)]
+    #[structopt(long, global = true)]
     pub info: bool,
+    /// Subcommand
+    #[structopt(subcommand)]
+    pub cmd: Command,
+}
+
+#[derive(StructOpt)]
+pub enum Command {
+    /// Download comics
+    Download {
+        /// Link to comic book
+        inputs: Vec<String>,
+    },
+    /// Print comic metadata to stdout
+    List {
+        /// Link to comic book
+        inputs: Vec<String>,
+    }
 }
 
 
@@ -116,5 +131,5 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
 }
 
 fn default_template() -> String {
-    String::from("{series}/{title}")
+    String::from("{series}/{title}.cbz")
 }
