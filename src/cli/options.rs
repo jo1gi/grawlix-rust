@@ -27,6 +27,9 @@ pub struct Arguments {
     /// Print extra information to stdout
     #[structopt(long, global = true)]
     pub info: bool,
+    /// Output as json
+    #[structopt(long, global = true)]
+    json: bool,
     /// Subcommand
     #[structopt(subcommand)]
     pub cmd: Command,
@@ -40,7 +43,7 @@ pub enum Command {
         inputs: Vec<String>,
     },
     /// Print comic metadata to stdout
-    List {
+    Info {
         /// Link to comic book
         inputs: Vec<String>,
     }
@@ -64,6 +67,9 @@ pub struct Config {
     /// Print extra information to stdout
     #[serde(default = "Default::default")]
     pub info: bool,
+    /// Print output as json
+    #[serde(default = "Default::default")]
+    pub json: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -125,7 +131,8 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
     args_into_config_bool!(args, config,
         overwrite,
         use_progress_file,
-        info
+        info,
+        json
     );
     return Some(config);
 }

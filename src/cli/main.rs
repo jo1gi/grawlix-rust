@@ -55,7 +55,7 @@ async fn run() -> Result<()> {
     setup_logger(args.log_level)?;
     match &args.cmd {
         Command::Download{ inputs } => download(&args, &config, inputs).await,
-        Command::List { inputs } => list(&args, &config, inputs).await
+        Command::Info { inputs } => info(&args, &config, inputs).await
     }
 }
 
@@ -71,10 +71,14 @@ async fn download(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Re
 }
 
 /// Print comics to stdout
-async fn list(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
+async fn info(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
     let comics = get_comics(args, config, inputs).await?;
-    for comic in comics {
-        logging::print_comic(&comic);
+    if config.json {
+        println!("{}", serde_json::to_string_pretty(&comics).unwrap());
+    } else {
+        for comic in comics {
+            logging::print_comic(&comic, config.json);
+        }
     }
     Ok(())
 }
@@ -196,7 +200,7 @@ async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
         } else {
             info!("Downloading {}", comic.title());
             if config.info {
-                logging::print_comic(comic);
+                logging::print_comic(comic, config.json);
             }
             comic.write(&path, &config.output_format).await?;
         }

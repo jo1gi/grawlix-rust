@@ -53,7 +53,24 @@ fn filter_log_message(metadata: &Metadata) -> bool {
     ].contains(&metadata.target())
 }
 
+
 /// Prints a comic book to stdout
-pub fn print_comic(comic: &grawlix::comic::Comic) {
-    println!("{}", comic.title().bold());
+pub fn print_comic(comic: &grawlix::comic::Comic, json: bool) {
+    if json {
+        println!("{}", serde_json::to_string_pretty(comic).unwrap());
+    } else {
+        println!("{}", comic.title().bold());
+        let metadata = &comic.metadata;
+        let data = [
+            ("Series", &metadata.series),
+            ("Relase date", &metadata.date()),
+            ("Publisher", &metadata.publisher),
+            ("Pages", &Some(comic.pages.len().to_string())),
+        ];
+        for (name, opt_value) in data {
+            if let Some(value) = opt_value {
+                println!("{}: {}", name, value);
+            }
+        }
+    }
 }

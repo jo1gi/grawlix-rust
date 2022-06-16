@@ -37,6 +37,15 @@ pub struct Metadata {
 
 impl Metadata {
 
+    /// Date as string
+    pub fn date(&self) -> Option<String> {
+        if let (Some(year), Some(month), Some(day)) = (self.year, self.month, self.day) {
+            Some(format!("{}-{}-{}", year, month, day))
+        } else {
+            None
+        }
+    }
+
     /// Export metadata in all available formats
     pub fn export_all(&self) -> Result<Vec<(&str, String)>, Error> {
         Ok(vec![
