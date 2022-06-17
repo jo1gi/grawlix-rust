@@ -13,12 +13,13 @@ use crate::{
     comic::Page
 };
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 pub use download::{download_comics, download_comics_metadata, create_default_client};
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 /// Id of comic or series on source
 pub enum ComicId {
     Issue(String),

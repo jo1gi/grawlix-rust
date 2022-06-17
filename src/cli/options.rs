@@ -30,6 +30,9 @@ pub struct Arguments {
     /// Output as json
     #[structopt(long, global = true)]
     json: bool,
+    /// Location of update file to use
+    #[structopt(long, global = true)]
+    pub update_location: Option<String>,
     /// Subcommand
     #[structopt(subcommand)]
     pub cmd: Command,
@@ -37,6 +40,11 @@ pub struct Arguments {
 
 #[derive(StructOpt)]
 pub enum Command {
+    /// Add to update file
+    Add {
+        /// Links to comic books
+        inputs: Vec<String>,
+    },
     /// Download comics
     Download {
         /// Link to comic book
@@ -70,6 +78,9 @@ pub struct Config {
     /// Print output as json
     #[serde(default = "Default::default")]
     pub json: bool,
+    /// Update file
+    #[serde(default = "default_update")]
+    pub update_location: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -126,7 +137,8 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
     let mut config = load_config_from_file()?;
     args_into_config_opt!(args, config,
         output_template,
-        output_format
+        output_format,
+        update_location
     );
     args_into_config_bool!(args, config,
         overwrite,
@@ -139,4 +151,8 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
 
 fn default_template() -> String {
     String::from("{series}/{title}.cbz")
+}
+
+fn default_update() -> String {
+    String::from("./.grawlix-update")
 }
