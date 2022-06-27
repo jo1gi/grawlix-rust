@@ -34,7 +34,7 @@ fn format_log_message(msg: String, level: Level) -> (String, String, Color) {
             let rest = msg[split+1..].to_string();
             let color = match first_word.as_str() {
                 "Searching" | "Downloading" | "Loading" | "Skipping" => Color::Blue,
-                "Found" | "Saved" | "Added" => Color::Green,
+                "Added" | "Completed" | "Found" | "Saved" => Color::Green,
                 _ => Color::BrightYellow,
             };
             (first_word, rest, color)

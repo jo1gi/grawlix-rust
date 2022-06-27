@@ -42,6 +42,8 @@ pub enum GrawlixDownloadError {
     RequestError(#[from] reqwest::Error),
     /// Url not supported: {0}
     UrlNotSupported(String),
+    /// Invalid source name: {0}
+    InvalidSourceName(String),
     /// Failed to parse response
     FailedResponseParse,
 }

@@ -22,13 +22,17 @@ pub fn create_default_client() -> reqwest::Client {
         .unwrap()
 }
 
-pub async fn download_comics(url: &str) -> Result<Vec<Comic>> {
+pub async fn download_comics_from_url(url: &str) -> Result<Vec<Comic>> {
     let source = super::source_from_url(url)?;
     let mut client = source.create_client();
     let comicid = source.id_from_url(url)?;
     debug!("Got id from url: {:?}", comicid);
     let all_ids = get_all_ids(&mut client, comicid, &source).await?;
-    let comics: Result<Vec<Comic>> = stream::iter(all_ids)
+    download_comics(all_ids, &client, &source).await
+}
+
+pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &Box<dyn Source>) -> Result<Vec<Comic>> {
+    stream::iter(comic_ids)
         .map(|i| {
             let source = &source;
             let client = &client;
@@ -52,8 +56,7 @@ pub async fn download_comics(url: &str) -> Result<Vec<Comic>> {
         })
         .buffered(5)
         .try_collect()
-        .await;
-    comics
+        .await
 }
 
 pub async fn download_comics_metadata(
@@ -96,7 +99,7 @@ async fn make_request<T>(client: &Client, request: Request<T>) -> Result<T> {
 }
 
 #[async_recursion(?Send)]
-async fn get_all_ids(
+pub async fn get_all_ids(
     client: &Client,
     comicid: ComicId,
     source: &Box<dyn Source>
@@ -135,35 +138,3 @@ async fn get_all_ids(
         ComicId::IssueWithMetadata(..) => vec![comicid],
     })
 }
-
-// async fn download_id(client: &mut Client, comicid: ComicId, source: &Box<dyn Source>) -> Option<Vec<Comic>> {
-//     let mut comicid = comicid;
-//     loop {
-//         match comicid {
-//             ComicId::Other(_) => {
-//                 comicid = make_request(client, source.get_correct_id(client, &comicid)?).await?;
-//             },
-//             ComicId::Series(_) => return download_series(client, comicid, source).await,
-//             ComicId::Issue(_) => return Some(vec![download_issue(client, comicid, source).await?]),
-//         }
-//     }
-// }
-
-// #[allow(unused_variables)]
-// async fn download_series(
-//     client: &mut Client,
-//     comicid: ComicId,
-//     source: &Box<dyn Source>
-// ) -> Option<Vec<Comic>> {
-//     unimplemented!()
-// }
-
-// async fn download_issue(client: &mut Client, comicid: ComicId, source: &Box<dyn Source>) -> Option<Comic> {
-//     let pages_request = source.get_pages(client, &comicid).ok()?;
-//     let metadata_source_response = source.get_metadata(client, &comicid)?;
-//     Some(Comic {
-//         pages: make_request(client, pages_request).await?,
-//         metadata: eval_source_response(client, metadata_source_response).await?,
-//         ..Default::default()
-//     })
-// }

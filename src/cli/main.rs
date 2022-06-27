@@ -53,7 +53,8 @@ async fn run() -> Result<()> {
     match &args.cmd {
         Command::Add { inputs } => update::add(&args, &config, inputs).await,
         Command::Download{ inputs } => download(&args, &config, inputs).await,
-        Command::Info { inputs } => info(&args, &config, inputs).await
+        Command::Info { inputs } => info(&args, &config, inputs).await,
+        Command::Update => update::update(&config).await
     }
 }
 

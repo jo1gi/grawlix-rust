@@ -6,7 +6,7 @@ use crate::{
 use grawlix::{
     error::GrawlixIOError,
     comic::Comic,
-    source::{Source, source_from_url, download_comics}
+    source::{Source, source_from_url, download_comics_from_url}
 };
 use log::{info, error};
 use std::{io::Write, process::exit, sync::{Arc, atomic::AtomicUsize}};
@@ -23,7 +23,7 @@ async fn load_inputs(inputs: &[String]) -> Result<Vec<Comic>> {
     let re = regex::Regex::new(r"https?://.+\.[a-zA-Z0-9]+").unwrap();
     for i in inputs {
         let mut comic = if re.is_match(&i) {
-            download_comics(&i).await?
+            download_comics_from_url(&i).await?
         } else if std::path::Path::new(&i).exists() {
             vec![Comic::from_file(&i)?]
         } else {

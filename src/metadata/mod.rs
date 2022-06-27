@@ -7,7 +7,7 @@ use std::{fmt, io::Read};
 use serde::{Deserialize, Serialize};
 
 /// Stores metadata about a comic book
-#[derive(Default, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Metadata {
     /// Title of comic
     pub title: Option<String>,
@@ -70,7 +70,7 @@ impl Metadata {
 }
 
 /// Author of comic book
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Author {
     /// Name of author
     pub name: String,
@@ -79,7 +79,7 @@ pub struct Author {
 }
 
 /// Comic book author type
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum AuthorType {
     Writer,
     Penciller,
@@ -133,7 +133,7 @@ impl From<&str> for AuthorType {
 }
 
 /// Reading direction of book
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum ReadingDirection {
     LeftToRight,
     RightToLeft,
@@ -146,7 +146,7 @@ impl Default for ReadingDirection {
 }
 
 /// Comic book identifier
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Identifier {
     source: String,
     id: String,

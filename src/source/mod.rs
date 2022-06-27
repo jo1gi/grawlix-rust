@@ -14,12 +14,14 @@ use crate::{
 };
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-pub use download::{download_comics, download_comics_metadata, create_default_client};
+pub use download::{
+    download_comics_from_url, download_comics, download_comics_metadata, create_default_client, get_all_ids
+};
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 /// Id of comic or series on source
 pub enum ComicId {
     Issue(String),
@@ -73,6 +75,18 @@ pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
         "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus
     );
     Err(Error::UrlNotSupported(url.to_string()))
+}
+
+/// Create source object from name
+pub fn source_from_name(name: &str) -> Result<Box<dyn Source>> {
+    let lower = name.to_lowercase();
+    Ok(match lower.as_str() {
+        "flipp" => Box::new(flipp::Flipp),
+        "webtoon" => Box::new(webtoon::Webtoon),
+        "league of legends" => Box::new(leagueoflegends::LeagueOfLegends),
+        "manga plus" => Box::new(mangaplus::MangaPlus),
+        _ => return Err(Error::InvalidSourceName(name.to_string()))
+    })
 }
 
 /// Trait for interacting with comic book source
