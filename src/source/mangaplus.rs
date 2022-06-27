@@ -25,7 +25,7 @@ impl Source for MangaPlus {
         if let ComicId::Series(x) = seriesid {
             source_request!(
                 requests: client.get(format!(
-                    "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=34&secret=243eb2b7776a8494c77c1de42bd45dfb", x
+                    "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=37&secret=243eb2b7776a8494c77c1de42bd45dfb", x
                 )),
                 transform: find_series_ids
             )
