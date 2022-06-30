@@ -1,7 +1,7 @@
 use regex::bytes::Regex;
 
 use crate::{comic::Page, metadata::{Metadata, ReadingDirection}, source::{
-        Source, ComicId, Result, Error, Request, SourceResponse,
+        Source, ComicId, Result, Error, Request, SourceResponse, SeriesInfo,
         utils::{issue_id_match, source_request, first_capture_bin}
     }};
 use reqwest::Client;
@@ -30,6 +30,10 @@ impl Source for MangaPlus {
                 transform: find_series_ids
             )
         } else { Err(Error::FailedResponseParse) }
+    }
+
+    fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
+        todo!()
     }
 
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
