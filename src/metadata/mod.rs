@@ -148,8 +148,8 @@ impl Default for ReadingDirection {
 /// Comic book identifier
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct Identifier {
-    source: String,
-    id: String,
+    pub source: String,
+    pub id: String,
 }
 
 pub fn date_from_str(date: &str) -> Option<(u32, u32, u32)> {
