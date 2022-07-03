@@ -67,7 +67,7 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
 
 fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
     // let title_re = Regex::new(r"\x17(.+)\x2a").unwrap();
-    let title_re = Regex::new(r#"#\d+".(.+)\x2a"#).unwrap();
+    let title_re = Regex::new(r#"(?s)#\d+\x22.(.+)\x2a"#).unwrap();
     Some(Metadata {
         title: first_capture_bin(&title_re, &resp[0]),
         series: first_capture_bin(&Regex::new(r#"MANGA_Plus (.+)\x12"#).unwrap(), &resp[0]),
