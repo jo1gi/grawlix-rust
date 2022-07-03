@@ -1,6 +1,6 @@
 use super::{ComicId, Source, Request, SourceResponse, Result, Error};
 use crate::{
-    comic::Comic, metadata::Metadata
+    comic::Comic, metadata::{Metadata, Identifier}
 };
 use async_recursion::async_recursion;
 use futures::{StreamExt, TryStreamExt, stream};
@@ -39,7 +39,8 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
             async move {
                 let pages_response = source.get_pages(&client, &i)?;
                 let pages = make_request(&client, pages_response).await?;
-                let metadata = match i {
+                let id_str = i.inner().clone();
+                let mut metadata = match i {
                     ComicId::Issue(_) => {
                         let metadata_response = source.get_metadata(&client, &i)?;
                         eval_source_response(&client, metadata_response).await?
@@ -47,6 +48,10 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
                     ComicId::IssueWithMetadata(_, meta) => meta,
                     _ => unreachable!()
                 };
+                metadata.identifiers.push(Identifier {
+                    source: source.name(),
+                    id: id_str
+                });
                 Ok(Comic {
                     pages,
                     metadata,

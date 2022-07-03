@@ -72,5 +72,12 @@ pub fn print_comic(comic: &grawlix::comic::Comic, json: bool) {
                 println!("{}: {}", name, value);
             }
         }
+        if metadata.identifiers.len() > 0 {
+            println!("Identifiers:");
+            for identifier in &metadata.identifiers {
+                println!(" - {}: {}", identifier.source, identifier.id);
+            }
+        }
+        println!();
     }
 }

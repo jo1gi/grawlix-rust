@@ -31,6 +31,18 @@ pub enum ComicId {
     Series(String),
 }
 
+impl ComicId {
+    pub fn inner(&self) -> &String {
+        match self {
+            ComicId::Issue(x)
+            | ComicId::IssueWithMetadata(x, _)
+            | ComicId::Other(x)
+            | ComicId::OtherWithMetadata(x, _)
+            | ComicId::Series(x) => x
+        }
+    }
+}
+
 /// Response from source.
 pub enum SourceResponse<T> {
     /// New http request
