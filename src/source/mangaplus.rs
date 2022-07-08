@@ -33,7 +33,15 @@ impl Source for MangaPlus {
     }
 
     fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
-        todo!()
+        if let ComicId::Series(x) = comicid {
+            Ok(SourceResponse::Request(source_request!(
+                requests: client.get(format!(
+                    "https://jumpg-webapi.tokyo-cdn.com/api/title_detailV2?title_id={}",
+                    x
+                )),
+                transform: response_series_info
+            ).unwrap()))
+        } else { Err(Error::FailedResponseParse) }
     }
 
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
@@ -67,6 +75,13 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
             Some(ComicId::Issue(id))
         })
         .collect()
+}
+
+fn response_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
+    let name_re = Regex::new(r#"\x09(.+)\x1a"#).unwrap();
+    Some(SeriesInfo {
+        name: first_capture_bin(&name_re, &resp[0])?
+    })
 }
 
 fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
@@ -157,9 +172,11 @@ mod tests {
 
     #[test]
     fn series() {
-        let responses = std::fs::read("./tests/source_data/mangaplus_series").unwrap();
-        let issues = super::find_series_ids(&[responses.into()]).unwrap();
-        println!("{:#?}", issues);
+        let data = std::fs::read("./tests/source_data/mangaplus_series").unwrap();
+        let responses = [data.into()];
+        let issues = super::find_series_ids(&responses).unwrap();
         assert_eq!(issues.len(), 1051);
+        let series_info = super::response_series_info(&responses).unwrap();
+        assert_eq!(series_info.name, "One Piece".to_string());
     }
 }

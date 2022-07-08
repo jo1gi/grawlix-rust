@@ -127,11 +127,7 @@ pub trait Source {
 
     /// Creates `SourceResponse` to get metadata about series
     #[allow(unused_variables)]
-    fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
-        Ok(SourceResponse::Value(SeriesInfo {
-            name: "UNKNOWN".to_string()
-        }))
-    }
+    fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>>;
 
     /// Downloads pages
     #[allow(unused_variables)]

@@ -1,6 +1,6 @@
 use crate::{
     source::{
-        Source, ComicId, Result, SourceResponse, Request, Error,
+        Source, ComicId, Result, SourceResponse, Request, Error, SeriesInfo,
         utils::{issue_id_match, source_request, resp_to_json}
     },
     comic::Page,
@@ -39,6 +39,15 @@ impl Source for LeagueOfLegends {
                         .collect()
                 }
             )
+        } else { Err(Error::FailedResponseParse) }
+    }
+
+    fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
+        if let ComicId::Series(x) = comicid {
+            Ok(SourceResponse::Request(source_request!(
+                requests: client.get(info_url(x)),
+                transform: response_series_info
+            ).unwrap()))
         } else { Err(Error::FailedResponseParse) }
     }
 
@@ -87,6 +96,15 @@ fn info_url(id: &str) -> String {
         "https://universe-meeps.leagueoflegends.com/v1/en_us/comics/{}/index.json",
         id
     )
+}
+
+fn response_series_info(responses: &[bytes::Bytes]) -> Option<SeriesInfo> {
+    Some(SeriesInfo {
+        name: resp_to_json::<serde_json::Value>(&responses[0])?
+            .get("name")?
+            .as_str()?
+            .to_string()
+    })
 }
 
 fn response_to_pages(responses: &[bytes::Bytes]) -> Option<Vec<Page>> {
@@ -179,16 +197,22 @@ mod tests {
 
     #[test]
     fn series() {
+        // Setup
         let source = super::LeagueOfLegends;
         let seriesid = source.id_from_url("https://universe.leagueoflegends.com/en_us/comic/sentinelsoflight")
             .unwrap();
         let client = reqwest::Client::new();
+        let data = std::fs::read("./tests/source_data/leagueoflegends_series.json").unwrap();
+        let responses = [data.into()];
+        // Series issues
         let transform = source.get_series_ids(&client, &seriesid).unwrap().transform;
-        let responses = std::fs::read("./tests/source_data/leagueoflegends_series.json").unwrap();
-        let issues = transform(&[responses.into()]).unwrap();
+        let issues = transform(&responses).unwrap();
         assert_eq!(issues.len(), 6);
         if let super::ComicId::Issue(issueid) = &issues[3] {
             assert_eq!("sentinelsoflight/issue-4", issueid);
         } else { panic!("Returned id was not an issue") }
+        // Series info
+        let series_info = super::response_series_info(&responses).unwrap();
+        assert_eq!(series_info.name, "Steadfast Heart".to_string());
     }
 }
