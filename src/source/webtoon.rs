@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     comic::Page, metadata::{Author, AuthorType, Metadata},
     source::{
-        ComicId, Error, Request, Result, Source, SourceResponse,
+        ComicId, Error, Request, Result, Source, SourceResponse, SeriesInfo,
         utils::{source_request, first_text, first_attr, issue_id_match, ANDROID_USER_AGENT}
     }};
 use reqwest::{Client, header};
@@ -57,6 +57,17 @@ impl Source for Webtoon {
         } else { Err(Error::FailedResponseParse) }
     }
 
+    fn get_series_info(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
+        if let ComicId::Series(x) = seriesid {
+            Ok(SourceResponse::Request(source_request!(
+                requests:
+                    client.get(format!("https://m.webtoons.com/en/{}", x))
+                        .header("User-Agent", ANDROID_USER_AGENT),
+                transform: response_series_info
+            ).unwrap()))
+        } else { Err(Error::FailedResponseParse) }
+    }
+
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
         if let ComicId::Issue(x) = comicid {
             Ok(SourceResponse::Request(source_request!(
@@ -74,6 +85,14 @@ impl Source for Webtoon {
             )
         } else {Err(Error::FailedResponseParse)}
     }
+}
+
+fn response_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
+    let html = std::str::from_utf8(&resp[0]).ok()?;
+    let doc = Html::parse_document(html);
+    Some(SeriesInfo{
+        name: first_attr(&doc, r#"meta[property="og:title"]"#, "content")?
+    })
 }
 
 fn parse_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
@@ -136,9 +155,12 @@ mod tests {
         let series_id = source.id_from_url("https://www.webtoons.com/en/challenge/the-weekly-roll/list?title_no=358889").unwrap();
         let client = source.create_client();
         let parser = source.get_series_ids(&client, &series_id).unwrap().transform;
-        let response = std::fs::read("./tests/source_data/webtoon_series.html").unwrap();
-        let series = parser(&[response.into()]).unwrap();
-        assert_eq!(series.len(), 116);
+        let data = std::fs::read("./tests/source_data/webtoon_series.html").unwrap();
+        let responses = [data.into()];
+        let issues = parser(&responses).unwrap();
+        assert_eq!(issues.len(), 116);
+        let info = super::response_series_info(&responses).unwrap();
+        assert_eq!(info.name, "The Weekly Roll".to_string());
     }
 
     #[test]

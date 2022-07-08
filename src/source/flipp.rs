@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     source::{
-        Source, SourceResponse, Request, Result, Error, ComicId,
+        Source, SourceResponse, Request, Result, Error, ComicId, SeriesInfo,
         utils::{self, issue_id_match, resp_to_json, value_to_optstring, source_request}
     },
     comic::Page,
@@ -47,6 +47,21 @@ impl Source for Flipp {
         } else { Err(Error::FailedResponseParse) }
     }
 
+    fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
+        if let ComicId::Series(x) = comicid {
+            let series_id = x.to_string();
+            Ok(SourceResponse::Request(source_request!(
+                requests: signin_data(client),
+                transform: move |resp| {
+                    let series_data = get_series_data(resp, &series_id)?;
+                    Some(SeriesInfo {
+                        name: series_data["name"].as_str()?.to_string()
+                    })
+                }
+            ).unwrap()))
+        } else { Err(Error::FailedResponseParse) }
+    }
+
     fn get_metadata(&self, _client: &Client, _comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
         Ok(SourceResponse::Value(Metadata::default()))
     }
@@ -54,28 +69,11 @@ impl Source for Flipp {
     fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
         match seriesid {
             ComicId::Series(x) => {
-                // Required data
-                let data = HashMap::from([
-                    ("email", ""),
-                    ("password", ""),
-                    ("token", ""),
-                    ("languageCulture", "da-DK"),
-                    ("appId", ""),
-                    ("appVersion", ""),
-                    ("uuid", ""),
-                    ("os", "")
-                ]);
                 let series_id = x.to_string();
                 source_request!(
-                    requests: client.post("https://flippapi.egmontservice.com/api/signin")
-                                .json(&data),
+                    requests: signin_data(client),
                     transform: move |resp| {
-                        let response_data: serde_json::Value = resp_to_json(&resp[0])?;
-                        // Finding correct series
-                        let series_data = response_data["publications"]
-                            .as_array()?
-                            .iter()
-                            .find(|x| x["customPublicationCode"].as_str() == Some(&series_id))?;
+                        let series_data = get_series_data(resp, &series_id)?;
                         // Extracting issue data
                         let series_name = &series_data["name"].as_str()?;
                         let series_id = series_data["customPublicationCode"].as_str()?;
@@ -122,6 +120,33 @@ impl Source for Flipp {
         } else { Err(Error::FailedDownload(self.name())) }
     }
 
+}
+
+fn get_series_data(resp: &[bytes::Bytes], series_id: &str) -> Option<serde_json::Value> {
+    let response_data: serde_json::Value = resp_to_json(&resp[0])?;
+    // Finding correct series
+    let series_data = response_data["publications"]
+        .as_array()?
+        .to_owned()
+        .into_iter()
+        .find(|x| x["customPublicationCode"].as_str() == Some(series_id))?;
+    Some(series_data)
+}
+
+fn signin_data(client: &Client) -> reqwest::RequestBuilder {
+    // Required data
+    let data = HashMap::from([
+        ("email", ""),
+        ("password", ""),
+        ("token", ""),
+        ("languageCulture", "da-DK"),
+        ("appId", ""),
+        ("appVersion", ""),
+        ("uuid", ""),
+        ("os", "")
+    ]);
+    client.post("https://flippapi.egmontservice.com/api/signin")
+        .json(&data)
 }
 
 

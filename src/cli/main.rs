@@ -54,6 +54,7 @@ async fn run() -> Result<()> {
         Command::Add { inputs } => update::add(&args, &config, inputs).await,
         Command::Download{ inputs } => download(&args, &config, inputs).await,
         Command::Info { inputs } => info(&args, &config, inputs).await,
+        Command::List => update::list(&config),
         Command::Update => update::update(&config).await
     }
 }
@@ -62,7 +63,7 @@ async fn run() -> Result<()> {
 /// Download comics
 async fn download(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
     let comics = utils::get_comics(args, config, inputs).await?;
-    info!("Found {} comics", comics.len());
+    info!("Found {} {}", comics.len(), if comics.len() > 1 { "comics" } else { "comic" });
     if comics.len() > 0 {
         utils::write_comics(comics, config).await?;
     }

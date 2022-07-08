@@ -1,4 +1,4 @@
-use super::{ComicId, Source, Request, SourceResponse, Result, Error};
+use super::{ComicId, Source, Request, SourceResponse, Result, Error, SeriesInfo};
 use crate::{
     comic::Comic, metadata::{Metadata, Identifier}
 };
@@ -22,6 +22,7 @@ pub fn create_default_client() -> reqwest::Client {
         .unwrap()
 }
 
+/// Download all comics from url
 pub async fn download_comics_from_url(url: &str) -> Result<Vec<Comic>> {
     let source = super::source_from_url(url)?;
     let mut client = source.create_client();
@@ -31,6 +32,7 @@ pub async fn download_comics_from_url(url: &str) -> Result<Vec<Comic>> {
     download_comics(all_ids, &client, &source).await
 }
 
+/// Download all comics from ids
 pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &Box<dyn Source>) -> Result<Vec<Comic>> {
     stream::iter(comic_ids)
         .map(|i| {
@@ -62,6 +64,13 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
         .buffered(5)
         .try_collect()
         .await
+}
+
+/// Download series metadata
+pub async fn download_series_metadata(client: &Client, source: &Box<dyn Source>, comicid: &ComicId) -> Result<SeriesInfo> {
+    let request = source.get_series_info(client, comicid)?;
+    let series_info = eval_source_response(&client, request).await?;
+    Ok(series_info)
 }
 
 pub async fn download_comics_metadata(

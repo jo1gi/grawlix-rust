@@ -15,7 +15,7 @@ use crate::{
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 pub use download::{
-    download_comics_from_url, download_comics, download_comics_metadata, create_default_client, get_all_ids
+    download_comics_from_url, download_comics, download_comics_metadata, create_default_client, get_all_ids, download_series_metadata
 };
 
 /// Result type with `GrawlixDownloadError`
@@ -41,6 +41,12 @@ impl ComicId {
             | ComicId::Series(x) => x
         }
     }
+}
+
+/// Info about comic series
+pub struct SeriesInfo {
+    /// Name of series
+    pub name: String,
 }
 
 /// Response from source.
@@ -128,8 +134,12 @@ pub trait Source {
     /// `seriesid` has to be a `ComicId::Series`
     fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>>;
 
-    /// Creates `Request` to download comic metadata
+    /// Creates `SourceREsponse` to download comic metadata
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>>;
+
+    /// Creates `SourceResponse` to get metadata about series
+    #[allow(unused_variables)]
+    fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>>;
 
     /// Downloads pages
     #[allow(unused_variables)]

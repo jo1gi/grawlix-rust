@@ -55,6 +55,8 @@ pub enum Command {
         /// Link to comic book
         inputs: Vec<String>,
     },
+    /// List all series added to updatefile
+    List,
     /// Update comics in updatefile
     Update
 }
