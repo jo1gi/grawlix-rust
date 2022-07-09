@@ -25,7 +25,7 @@ struct UpdateSeries {
     source: String,
     name: String,
     id: String,
-    downloaded_issues: Vec<ComicId>
+    downloaded_issues: Vec<String>
 }
 
 type Result<T> = std::result::Result<T, UpdateError>;
@@ -95,18 +95,20 @@ pub async fn update(config: &Config) -> std::result::Result<(), CliError> {
     for series in &mut update_data {
         let source = source_from_name(&series.source)?;
         let client = source.create_client();
-        let mut ids: Vec<ComicId> = get_all_ids(&client, ComicId::Series(series.id.clone()), &source).await?
+        let ids: Vec<ComicId> = get_all_ids(&client, ComicId::Series(series.id.clone()), &source).await?
             .into_iter()
-            .filter(|x| !series.downloaded_issues.contains(x))
+            .filter(|x| !series.downloaded_issues.contains(x.inner()))
             .collect();
         if ids.len() == 0 {
             continue
         }
-        // TODO: Replace source name with series name
         info!("Retrieving data for {} comics from {}", ids.len(), series.name);
         let comics = download_comics(ids.clone(), &client, &source).await?;
         write_comics(comics, config).await?;
-        series.downloaded_issues.append(&mut ids);
+        let mut string_ids = ids.iter()
+            .map(|x| x.inner().clone())
+            .collect();
+        series.downloaded_issues.append(&mut string_ids);
     }
     write_updatefile(update_data, &config.update_location);
     info!("Completed update");
