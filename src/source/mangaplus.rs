@@ -78,7 +78,7 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
 }
 
 fn response_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
-    let name_re = Regex::new(r#"\x09(.+)\x1a"#).unwrap();
+    let name_re = Regex::new(r#"(?s)\x12.(.+)\x1a"#).unwrap();
     Some(SeriesInfo {
         name: first_capture_bin(&name_re, &resp[0])?
     })
