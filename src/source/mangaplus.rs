@@ -2,7 +2,7 @@ use regex::bytes::Regex;
 
 use crate::{comic::Page, metadata::{Metadata, ReadingDirection}, source::{
         Source, ComicId, Result, Error, Request, SourceResponse, SeriesInfo,
-        utils::{issue_id_match, source_request, first_capture_bin}
+        utils::{issue_id_match, source_request, first_capture_bin, simple_request, simple_response}
     }};
 use reqwest::Client;
 
@@ -22,48 +22,43 @@ impl Source for MangaPlus {
     }
 
     fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
-        if let ComicId::Series(x) = seriesid {
-            source_request!(
-                requests: client.get(format!(
-                    "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=37&secret=243eb2b7776a8494c77c1de42bd45dfb", x
-                )),
-                transform: find_series_ids
-            )
-        } else { Err(Error::FailedResponseParse) }
+        simple_request!(
+            id: seriesid,
+            client: client,
+            id_type: Series,
+            url: "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=37&secret=243eb2b7776a8494c77c1de42bd45dfb",
+            transform: find_series_ids
+        )
     }
 
     fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
-        if let ComicId::Series(x) = comicid {
-            Ok(SourceResponse::Request(source_request!(
-                requests: client.get(format!(
-                    "https://jumpg-webapi.tokyo-cdn.com/api/title_detailV2?title_id={}",
-                    x
-                )),
-                transform: response_series_info
-            ).unwrap()))
-        } else { Err(Error::FailedResponseParse) }
+        simple_response!(
+            id: comicid,
+            client: client,
+            id_type: Series,
+            url: "https://jumpg-webapi.tokyo-cdn.com/api/title_detailV2?title_id={}",
+            transform: response_series_info
+        )
     }
 
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
-        if let ComicId::Issue(x) = comicid {
-            Ok(SourceResponse::Request(source_request!(
-                requests: client.get(
-                    format!("https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high", x)
-                ),
-                transform: response_to_metadata
-            ).unwrap()))
-        } else { Err(Error::FailedResponseParse) }
+        simple_response!(
+            id: comicid,
+            client: client,
+            id_type: Issue,
+            url: "https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high",
+            transform: response_to_metadata
+        )
     }
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
-        if let ComicId::Issue(x) = comicid {
-            source_request!(
-                requests: client.get(
-                    format!("https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high", x)
-                ),
-                transform: response_to_pages
-            )
-        } else { Err(Error::FailedResponseParse) }
+        simple_request!(
+            id: comicid,
+            client: client,
+            id_type: Issue,
+            url: "https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high",
+            transform: response_to_pages
+        )
     }
 }
 

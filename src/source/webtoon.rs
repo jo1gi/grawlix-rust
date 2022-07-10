@@ -4,7 +4,10 @@ use crate::{
     comic::Page, metadata::{Author, AuthorType, Metadata},
     source::{
         ComicId, Error, Request, Result, Source, SourceResponse, SeriesInfo,
-        utils::{source_request, first_text, first_attr, issue_id_match, ANDROID_USER_AGENT}
+        utils::{
+            source_request, first_text, first_attr, issue_id_match, simple_request,
+            simple_response, ANDROID_USER_AGENT
+        }
     }};
 use reqwest::{Client, header};
 use scraper::{Html, Selector};
@@ -69,21 +72,23 @@ impl Source for Webtoon {
     }
 
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
-        if let ComicId::Issue(x) = comicid {
-            Ok(SourceResponse::Request(source_request!(
-                requests: client.get(format!("https://www.webtoons.com/en/{}", x)),
-                transform: parse_metadata
-            ).unwrap()))
-        } else { Err(Error::FailedResponseParse) }
+        simple_response!(
+            id: comicid,
+            client: client,
+            id_type: Issue,
+            url: "https://www.webtoons.com/en/{}",
+            transform: parse_metadata
+        )
     }
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
-        if let ComicId::Issue(x) = comicid {
-            source_request!(
-                requests: client.get(format!("https://www.webtoons.com/en/{}", x)),
-                transform: response_to_pages
-            )
-        } else {Err(Error::FailedResponseParse)}
+        simple_request!(
+            id: comicid,
+            client: client,
+            id_type: Issue,
+            url: "https://www.webtoons.com/en/{}",
+            transform: response_to_pages
+        )
     }
 }
 
