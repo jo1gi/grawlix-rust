@@ -5,6 +5,7 @@ mod utils;
 mod flipp;
 mod leagueoflegends;
 mod mangaplus;
+mod marvel;
 mod webtoon;
 
 use crate::{
