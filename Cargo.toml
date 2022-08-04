@@ -54,3 +54,5 @@ colored = { version = "^2.0", optional = true }
 ctrlc = "3"
 # Load data from html sites
 scraper = "0.13"
+# For decrypting data
+rust-crypto = "0.2.36"

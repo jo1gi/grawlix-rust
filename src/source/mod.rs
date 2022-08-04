@@ -2,6 +2,7 @@ mod download;
 /// Utility functions and macros for implementing `Source`
 mod utils;
 
+mod dcuniverseinfinite;
 mod flipp;
 mod leagueoflegends;
 mod mangaplus;
@@ -52,7 +53,7 @@ pub struct SeriesInfo {
 /// Response from source.
 pub enum SourceResponse<T> {
     /// New http request
-    Request(Request<T>),
+    Request(Request<SourceResponse<T>>),
     /// Return value
     Value(T)
 }
@@ -90,7 +91,8 @@ pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
         "flipp.dk" => flipp::Flipp,
         "webtoons.com" => webtoon::Webtoon,
         "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends,
-        "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus
+        "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus,
+        "dcuniverseinfinite.com" => dcuniverseinfinite::DCUniverseInfinite::default()
     );
     Err(Error::UrlNotSupported(url.to_string()))
 }
@@ -103,6 +105,7 @@ pub fn source_from_name(name: &str) -> Result<Box<dyn Source>> {
         "webtoon" => Box::new(webtoon::Webtoon),
         "league of legends" => Box::new(leagueoflegends::LeagueOfLegends),
         "manga plus" => Box::new(mangaplus::MangaPlus),
+        "dc" | "dcuniverseinfinite" => Box::new(dcuniverseinfinite::DCUniverseInfinite::default()),
         _ => return Err(Error::InvalidSourceName(name.to_string()))
     })
 }
@@ -143,7 +146,7 @@ pub trait Source {
 
     /// Downloads pages
     #[allow(unused_variables)]
-    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
+    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
         Err(Error::PagesNotSupported(self.name()))
     }
 
@@ -159,7 +162,7 @@ pub trait Source {
 
     /// Authenticate with source using `creds`
     #[allow(unused_variables)]
-    fn authenticate(&mut self, client: &mut Client, creds: &Credentials) -> Result<()> {
+    fn authenticate(&mut self, client: &Client, creds: Credentials) -> Result<()> {
         Ok(())
     }
 

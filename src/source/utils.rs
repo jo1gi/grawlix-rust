@@ -1,4 +1,4 @@
-use super::{Result, Error, ComicId};
+use super::{Result, Error, ComicId, SourceResponse};
 
 /// User Agent of Chrome on Android
 pub const ANDROID_USER_AGENT: &str = "Mozilla/5.0 (Linux; Android 9; ASUS_X00TD; Flow) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/359.0.0.288 Mobile Safari/537.36";
@@ -84,7 +84,22 @@ pub(super) use simple_request;
 
 /// Simply create SourceResponse
 macro_rules! simple_response {
-    (id: $id:expr, client: $client:expr, id_type: $idtype:ident, url: $url:expr, transform: $transform:expr) => {
+    (id: $id:expr, client: $client:expr, id_type: $idtype:ident, url: $url:expr, value: $transform:expr) => {
+        if let crate::source::ComicId::$idtype(x) = $id {
+            Ok::<_, crate::error::GrawlixDownloadError>(
+                crate::source::SourceResponse::Request(
+                    crate::source::Request{
+                        requests: vec![$client.get(format!($url, x)).build()?],
+                        transform: Box::new(|resp| {
+                            let value = $transform(resp)?;
+                            Some(SourceResponse::Value(value))
+                        })
+                    }
+                )
+            )
+        } else { Err(crate::source::Error::FailedResponseParse) }
+    };
+    (id: $id:expr, client: $client:expr, id_type: $idtype:ident, url: $url:expr, request: $transform:expr) => {
         if let crate::source::ComicId::$idtype(x) = $id {
             Ok::<_, crate::error::GrawlixDownloadError>(
                 crate::source::SourceResponse::Request(
@@ -137,4 +152,11 @@ pub fn first_capture_bin(re: &regex::bytes::Regex, input: &[u8]) -> Option<Strin
     let capture = re.captures(input)?.get(1)?.as_bytes();
     let value = std::str::from_utf8(capture).ok()?;
     Some(value.to_string())
+}
+
+pub fn value_fn<T>(f: &'static dyn Fn(&[bytes::Bytes]) -> Option<T>) -> Box<dyn Fn(&[bytes::Bytes]) -> Option<SourceResponse<T>>> {
+    Box::new(|resp| {
+        let value = f(resp)?;
+        Some(SourceResponse::Value(value))
+    })
 }

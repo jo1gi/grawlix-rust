@@ -37,7 +37,7 @@ impl Source for MangaPlus {
             client: client,
             id_type: Series,
             url: "https://jumpg-webapi.tokyo-cdn.com/api/title_detailV2?title_id={}",
-            transform: response_series_info
+            value: response_series_info
         )
     }
 
@@ -47,17 +47,17 @@ impl Source for MangaPlus {
             client: client,
             id_type: Issue,
             url: "https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high",
-            transform: response_to_metadata
+            value: response_to_metadata
         )
     }
 
-    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
-        simple_request!(
+    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
+        simple_response!(
             id: comicid,
             client: client,
             id_type: Issue,
             url: "https://jumpg-webapi.tokyo-cdn.com/api/manga_viewer?chapter_id={}&split=yes&img_quality=super_high",
-            transform: response_to_pages
+            value: response_to_pages
         )
     }
 }

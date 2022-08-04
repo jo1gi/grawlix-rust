@@ -40,7 +40,7 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
             let client = &client;
             async move {
                 let pages_response = source.get_pages(&client, &i)?;
-                let pages = make_request(&client, pages_response).await?;
+                let pages = eval_source_response(&client, pages_response).await?;
                 let id_str = i.inner().clone();
                 let mut metadata = match i {
                     ComicId::Issue(_) => {
@@ -89,16 +89,15 @@ pub async fn download_comics_metadata(
     return Ok(metadata);
 }
 
-pub async fn authenticate_source(
-
-) -> Result<()> {
-    Ok(())
-}
-
 async fn eval_source_response<T>(client: &Client, response: SourceResponse<T>) -> Result<T> {
-    match response {
-        SourceResponse::Value(v) => Ok(v),
-        SourceResponse::Request(r) => make_request(client, r).await
+    let mut response = response;
+    loop {
+        match response {
+            SourceResponse::Value(v) => return Ok(v),
+            SourceResponse::Request(r) => {
+                response = make_request(client, r).await?;
+            }
+        }
     }
 }
 

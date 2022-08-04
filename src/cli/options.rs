@@ -85,9 +85,12 @@ pub struct Config {
     /// Update file
     #[serde(default = "default_update")]
     pub update_location: String,
+    /// DC Universe Infinite Config
+    #[serde(default = "Default::default")]
+    pub dcuniverseinfinite: Option<SourceData>
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct SourceData {
     pub username: Option<String>,
     pub password: Option<String>,
@@ -100,7 +103,11 @@ impl TryInto<Credentials> for SourceData {
     fn try_into(self) -> Result<Credentials, Self::Error> {
         if let Some(api_key) = self.api_key {
             Ok(Credentials::ApiKey(api_key))
-        } else { Err(crate::CliError::InvalidCredentials) }
+        } else if self.username.is_some() && self.password.is_some() {
+            Ok(Credentials::UsernamePassword(self.username.unwrap().clone(), self.password.unwrap().clone()))
+        } else {
+            Err(crate::CliError::InvalidCredentials)
+        }
     }
 }
 
