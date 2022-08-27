@@ -6,7 +6,7 @@ use crate::{
 use grawlix::source::{ComicId, source_from_name, download_comics, get_all_ids, download_series_metadata};
 use thiserror::Error;
 use displaydoc::Display;
-use log::{info, warn, error};
+use log::{info, warn, error, debug};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 
@@ -58,6 +58,7 @@ pub async fn add(args: &Arguments, config: &Config, inputs: &Vec<String>) -> std
     for link in links {
         let source = utils::get_source(&link, config).await?;
         let id = source.id_from_url(&link)?;
+        debug!("Found id: {:?}", id);
         if let ComicId::Series(series_id) = &id {
             let client = source.create_client();
             let series_info = download_series_metadata(&client, &source, &id).await?;

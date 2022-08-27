@@ -16,8 +16,8 @@ pub struct Webtoon;
 
 fn id_from_url(url: &str) -> Result<ComicId> {
     issue_id_match!(url,
-        r"(challenge/.+/viewer\?.+episode_no=\d+)" => Issue,
-        r"(challenge/.+/list\?title_no=\d+)" => Series
+        r"(\w+/[^/]+/[^/]+/viewer\?.+episode_no=\d+)" => Issue,
+        r"(\w+/[^/]+/list\?title_no=\d+)" => Series
     )
 }
 
