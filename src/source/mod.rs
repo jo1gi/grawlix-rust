@@ -91,7 +91,8 @@ pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
         "flipp.dk" => flipp::Flipp,
         "webtoons.com" => webtoon::Webtoon,
         "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends,
-        "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus
+        "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus,
+        "marvel.com" => marvel::Marvel
     );
     Err(Error::UrlNotSupported(url.to_string()))
 }
@@ -104,12 +105,14 @@ pub fn source_from_name(name: &str) -> Result<Box<dyn Source>> {
         "webtoon" => Box::new(webtoon::Webtoon),
         "league of legends" => Box::new(leagueoflegends::LeagueOfLegends),
         "manga plus" => Box::new(mangaplus::MangaPlus),
+        "marvel" => Box::new(marvel::Marvel),
         _ => return Err(Error::InvalidSourceName(name.to_string()))
     })
 }
 
 /// Trait for interacting with comic book source
 /// Trait object can be created with `source_from_url` function
+#[async_trait::async_trait]
 pub trait Source {
     /// Name of source
     fn name(&self) -> String;
@@ -160,7 +163,7 @@ pub trait Source {
 
     /// Authenticate with source using `creds`
     #[allow(unused_variables)]
-    fn authenticate(&mut self, client: &mut Client, creds: &Credentials) -> Result<()> {
+    async fn authenticate(&mut self, client: &mut Client, creds: &Credentials) -> Result<()> {
         Ok(())
     }
 
