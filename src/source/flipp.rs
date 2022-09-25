@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     source::{
         Source, SourceResponse, Request, Result, Error, ComicId, SeriesInfo,
-        utils::{self, issue_id_match, resp_to_json, value_to_optstring, source_request}
+        utils::{self, issue_id_match, resp_to_json, value_to_optstring, source_request, value_fn}
     },
     comic::Page,
     metadata::Metadata,
@@ -54,9 +54,9 @@ impl Source for Flipp {
                 requests: signin_data(client),
                 transform: move |resp| {
                     let series_data = get_series_data(resp, &series_id)?;
-                    Some(SeriesInfo {
+                    Some(SourceResponse::Value(SeriesInfo {
                         name: series_data["name"].as_str()?.to_string()
-                    })
+                    }))
                 }
             ).unwrap()))
         } else { Err(Error::FailedResponseParse) }
@@ -111,12 +111,12 @@ impl Source for Flipp {
         false
     }
 
-    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
+    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
         if let ComicId::Issue(url) | ComicId::IssueWithMetadata(url, _) = comicid {
-            source_request!(
+            Ok(SourceResponse::Request(source_request!(
                 requests: client.get(url),
-                transform: response_to_pages
-            )
+                transform: value_fn(&response_to_pages)
+            ).unwrap()))
         } else { Err(Error::FailedDownload(self.name())) }
     }
 

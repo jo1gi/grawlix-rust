@@ -1,29 +1,56 @@
 use crate::{
     CliError, Result,
     logging,
-    options::{Arguments, Config}
+    options::{Arguments, Config, SourceData}
 };
 use grawlix::{
     error::GrawlixIOError,
     comic::Comic,
-    source::{Source, source_from_url, download_comics_from_url}
+    source::{Source, Credentials, source_from_url, get_all_ids, download_comics}
 };
-use log::{info, error};
+use log::{info, debug, error};
 use std::{io::Write, process::exit, sync::{Arc, atomic::AtomicUsize}};
 
 const PROGRESS_FILE: &str = ".grawlix-progress";
 
-pub async fn get_source(url: &str, _config: &Config) -> Result<Box<dyn Source>> {
-    Ok(source_from_url(url)?)
+/// Get settings for source from config
+fn get_source_settings(source: &Box<dyn Source>, config: &Config) -> Option<SourceData> {
+    match source.name().as_str() {
+        "DC Universe Infinite" => config.dcuniverseinfinite.clone(),
+        _ => None
+    }
+}
+
+/// Create source from url and authenticate if credentials are available
+pub async fn get_source(url: &str, config: &Config) -> Result<Box<dyn Source>> {
+    let mut source = source_from_url(url)?;
+    if let Some(sourcedata) = get_source_settings(&source, config) {
+        // TODO: Don't crash when missing credentials
+        debug!("Authenticating source");
+        let credentials: Credentials = sourcedata.try_into()?;
+        let client = source.create_client();
+        source.authenticate(&client, credentials)?;
+    }
+    Ok(source)
+}
+
+async fn download_comics_from_url(url: &str, config: &Config) -> Result<Vec<Comic>> {
+    let source = get_source(url, config).await?;
+    let client = source.create_client();
+    let comicid = source.id_from_url(url)?;
+    debug!("Got id from url: {:?}", comicid);
+    let all_ids = get_all_ids(&client, comicid, &source).await?;
+    let comics = download_comics(all_ids, &client, &source).await?;
+    Ok(comics)
 }
 
 /// Create vector of comics from list of inputs
-async fn load_inputs(inputs: &[String]) -> Result<Vec<Comic>> {
+async fn load_inputs(inputs: &[String], config: &Config) -> Result<Vec<Comic>> {
     let mut comics: Vec<Comic> = Vec::new();
     let re = regex::Regex::new(r"https?://.+\.[a-zA-Z0-9]+").unwrap();
     for i in inputs {
         let mut comic = if re.is_match(&i) {
-            download_comics_from_url(&i).await?
+            download_comics_from_url(&i, config).await?
         } else if std::path::Path::new(&i).exists() {
             vec![Comic::from_file(&i)?]
         } else {
@@ -35,6 +62,7 @@ async fn load_inputs(inputs: &[String]) -> Result<Vec<Comic>> {
 }
 
 
+/// Load all links from a file
 fn load_links_from_file(link_file: &std::path::PathBuf) -> Result<Vec<String>> {
     if link_file.exists() {
         let links = std::fs::read_to_string(link_file)
@@ -77,7 +105,7 @@ pub async fn get_comics(args: &Arguments, config: &Config, inputs: &Vec<String>)
         let links = get_all_links(args, inputs)?;
         if links.len() > 0 {
             info!("Searching for comics");
-            Ok(load_inputs(&links).await?)
+            Ok(load_inputs(&links, config).await?)
         } else {
             Ok(Vec::new())
         }

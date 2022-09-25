@@ -1,7 +1,7 @@
 use crate::{
     source::{
         Source, ComicId, Result, SourceResponse, Request, Error, SeriesInfo,
-        utils::{issue_id_match, source_request, resp_to_json}
+        utils::{issue_id_match, source_request, simple_response, resp_to_json, value_fn}
     },
     comic::Page,
     metadata::{Metadata, Author, AuthorType},
@@ -43,12 +43,13 @@ impl Source for LeagueOfLegends {
     }
 
     fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
-        if let ComicId::Series(x) = comicid {
-            Ok(SourceResponse::Request(source_request!(
-                requests: client.get(info_url(x)),
-                transform: response_series_info
-            ).unwrap()))
-        } else { Err(Error::FailedResponseParse) }
+        simple_response!(
+            id: comicid,
+            client: client,
+            id_type: Issue,
+            url: "https://universe-meeps.leagueoflegends.com/v1/en_us/comics/{}/index.json",
+            value: response_series_info
+        )
     }
 
     fn metadata_require_authentication(&self) -> bool {
@@ -60,32 +61,28 @@ impl Source for LeagueOfLegends {
     }
 
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>> {
-        if let ComicId::Issue(issueid) = comicid {
-            Ok(SourceResponse::Request(source_request!(
-                requests: client.get(info_url(issueid)),
-                transform: response_to_metadata
-            ).unwrap()))
-        } else { Err(Error::FailedResponseParse) }
-        // Ok(SourceResponse::Value(Metadata::default()))
+        simple_response!(
+            id: comicid,
+            client: client,
+            id_type: Issue,
+            url: "https://universe-meeps.leagueoflegends.com/v1/en_us/comics/{}/index.json",
+            value: response_to_metadata
+        )
     }
 
 
-    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
+    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
         if let ComicId::Issue(issueid) = comicid {
-            source_request!(
-                requests: [
-                    // Pages
-                    client.get(
-                        format!(
-                            "https://universe-comics.leagueoflegends.com/comics/en_us/{}/index.json",
-                            issueid
-                        )
-                    ),
-                    // Metadata includes cover page
-                    client.get(info_url(issueid))
+            Ok(SourceResponse::Request(Request{
+                requests: vec![
+                    client.get(format!(
+                        "https://universe-comics.leagueoflegends.com/comics/en_us/{}/index.json",
+                        issueid
+                    )).build()?,
+                    client.get(info_url(issueid)).build()?
                 ],
-                transform: response_to_pages
-            )
+                transform: value_fn(&response_to_pages)
+            }))
         } else { Err(Error::FailedResponseParse) }
     }
 

@@ -1,11 +1,16 @@
 mod format;
 pub mod read;
 mod write;
-use std::{collections::HashMap, str::FromStr};
-
-use serde::{Deserialize, Serialize};
 
 use crate::metadata::Metadata;
+use std::{collections::HashMap, str::FromStr};
+use serde::{Deserialize, Serialize};
+use crypto::{
+    aes::{KeySize, cbc_decryptor},
+    blockmodes::NoPadding,
+    buffer::{RefReadBuffer, RefWriteBuffer, WriteBuffer, ReadBuffer},
+};
+use log::debug;
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Comic {
@@ -75,8 +80,8 @@ impl Comic {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Page {
-    file_format: String,
-    page_type: PageType,
+    pub file_format: String,
+    pub page_type: PageType,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -91,16 +96,18 @@ pub enum PageType {
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct OnlinePage {
     /// Url of page
-    url: String,
+    pub url: String,
     /// Required headers for request
-    headers: Option<HashMap<String, String>>,
+    pub headers: Option<HashMap<String, String>>,
     /// Encryption scheme of page
-    encryption: Option<PageEncryptionScheme>
+    pub encryption: Option<PageEncryptionScheme>
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum PageEncryptionScheme {
-    XOR(Vec<u8>)
+    XOR(Vec<u8>),
+    /// Encryption scheme used by DC Universe Infinite
+    DCUniverseInfinite([u8; 32]),
 }
 
 impl Page {
@@ -160,12 +167,42 @@ impl OnlinePage {
 }
 
 fn decrypt_page(bytes: Vec<u8>, enc: &PageEncryptionScheme) -> Vec<u8> {
+    debug!("Decrypting page");
     match enc {
         PageEncryptionScheme::XOR(key) => {
             bytes.iter()
                 .zip(key.iter().cycle())
                 .map(|(v, k)| v ^ k)
                 .collect()
+        },
+        PageEncryptionScheme::DCUniverseInfinite(key) => {
+            // The first 8 bytes contains the size of the output file
+            let original_size = &bytes[0..8];
+            // Convert the size to a number
+            let size = {
+                let mut tmp = [0u8; 8];
+                tmp.clone_from_slice(&original_size);
+                u64::from_le_bytes(tmp) as usize
+            };
+            // Check if size is correct
+            if size > bytes.len() {
+                // TODO: Better error handling
+                panic!("Size not correct for final image");
+            }
+            // The next 16 bytes are the initialization vector
+            let iv = &bytes[8..24];
+            // The rest of the data is the image
+            let mut image_buffer = RefReadBuffer::new(&bytes[24..]);
+            // Decrypts the image
+            let mut decrypted_vector = vec![0; size];
+            let mut decrypted_buffer = RefWriteBuffer::new(&mut decrypted_vector);
+            let mut aescbc = cbc_decryptor(KeySize::KeySize256, key, iv, NoPadding);
+            aescbc.decrypt(&mut image_buffer, &mut decrypted_buffer, true)
+                // TODO: Handle correct
+                .expect("Could not decrypt image from DC Universe Infinite");
+            // Gets image data
+            let mut image = decrypted_buffer.take_read_buffer();
+            image.take_remaining().to_vec()
         }
     }
 }

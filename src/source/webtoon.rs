@@ -5,7 +5,7 @@ use crate::{
     source::{
         ComicId, Error, Request, Result, Source, SourceResponse, SeriesInfo,
         utils::{
-            source_request, first_text, first_attr, issue_id_match, simple_request,
+            source_request, first_text, first_attr, issue_id_match, value_fn,
             simple_response, ANDROID_USER_AGENT
         }
     }};
@@ -66,7 +66,7 @@ impl Source for Webtoon {
                 requests:
                     client.get(format!("https://m.webtoons.com/en/{}", x))
                         .header("User-Agent", ANDROID_USER_AGENT),
-                transform: response_series_info
+                transform: value_fn(&response_series_info)
             ).unwrap()))
         } else { Err(Error::FailedResponseParse) }
     }
@@ -77,17 +77,17 @@ impl Source for Webtoon {
             client: client,
             id_type: Issue,
             url: "https://www.webtoons.com/en/{}",
-            transform: parse_metadata
+            value: parse_metadata
         )
     }
 
-    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
-        simple_request!(
+    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
+        simple_response!(
             id: comicid,
             client: client,
             id_type: Issue,
             url: "https://www.webtoons.com/en/{}",
-            transform: response_to_pages
+            value: response_to_pages
         )
     }
 }
