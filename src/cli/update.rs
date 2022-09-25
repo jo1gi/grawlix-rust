@@ -43,7 +43,7 @@ fn load_updatefile(path: &str) -> Result<Vec<UpdateSeries>> {
     }
 }
 
-fn write_updatefile(update_data: Vec<UpdateSeries>, path: &str) {
+fn write_updatefile(update_data: &Vec<UpdateSeries>, path: &str) {
     let mut file = std::fs::File::create(path).unwrap();
     match file.write_all(serde_json::to_string(&update_data).unwrap().as_bytes()) {
         Ok(_) => (),
@@ -76,7 +76,7 @@ pub async fn add(args: &Arguments, config: &Config, inputs: &Vec<String>) -> std
         }
     }
     update_data.sort_by(|x, y| x.name.cmp(&y.name));
-    write_updatefile(update_data, &config.update_location);
+    write_updatefile(&update_data, &config.update_location);
     Ok(())
 }
 
@@ -92,26 +92,30 @@ pub fn list(config: &Config) -> std::result::Result<(), CliError> {
 /// Update all files stored in updatefile
 pub async fn update(config: &Config) -> std::result::Result<(), CliError> {
     let mut update_data = load_updatefile(&config.update_location)?;
-    info!("Searching for updates");
     for series in &mut update_data {
+        info!("Searching for updates in {}", series.name);
+        // Creating source
         let source = source_from_name(&series.source)?;
         let client = source.create_client();
+        // Finding new ids
         let ids: Vec<ComicId> = get_all_ids(&client, ComicId::Series(series.id.clone()), &source).await?
             .into_iter()
             .filter(|x| !series.downloaded_issues.contains(x.inner()))
             .collect();
+        // Downloading new comics
         if ids.len() == 0 {
             continue
         }
         info!("Retrieving data for {} comics from {}", ids.len(), series.name);
         let comics = download_comics(ids.clone(), &client, &source).await?;
         write_comics(comics, config).await?;
+        // Adding new ids to update file
         let mut string_ids = ids.iter()
             .map(|x| x.inner().clone())
             .collect();
         series.downloaded_issues.append(&mut string_ids);
     }
-    write_updatefile(update_data, &config.update_location);
+    write_updatefile(&update_data, &config.update_location);
     info!("Completed update");
     Ok(())
 }
