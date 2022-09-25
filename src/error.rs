@@ -38,7 +38,7 @@ pub enum GrawlixDownloadError {
     FailedAuthentication(String),
     /// Failed to download from {0}
     FailedDownload(String),
-    /// Failed to make request
+    /// Failed to make request: {0}
     RequestError(#[from] reqwest::Error),
     /// Url not supported: {0}
     UrlNotSupported(String),
