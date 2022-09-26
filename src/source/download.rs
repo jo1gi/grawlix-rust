@@ -103,12 +103,21 @@ async fn eval_source_response<T>(client: &Client, response: SourceResponse<T>) -
 
 async fn make_request<T>(client: &Client, request: Request<T>) -> Result<T> {
     let mut responses = Vec::new();
-    for i in request.requests {
-        let response = client.execute(i).await?;
-        let bytes = response.bytes().await?;
+    for request in request.requests {
+        let bytes = request
+            .send()
+            .await?
+            .bytes()
+            .await?;
+        // let response = client.execute(i).await?;
+        // let bytes = response.bytes().await?;
         responses.push(bytes);
     }
-    (request.transform)(&responses).ok_or(Error::FailedResponseParse)
+    (request.transform)(&responses)
+        .ok_or_else(|| {
+            log::debug!("{:#?}", responses);
+            Error::FailedResponseParse
+        })
 }
 
 #[async_recursion(?Send)]

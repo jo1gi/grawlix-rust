@@ -1,4 +1,5 @@
 mod download;
+mod request;
 /// Utility functions and macros for implementing `Source`
 mod utils;
 
@@ -19,6 +20,7 @@ use serde::{Deserialize, Serialize};
 pub use download::{
     download_comics_from_url, download_comics, download_comics_metadata, create_default_client, get_all_ids, download_series_metadata
 };
+pub use request::HttpRequest;
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
@@ -62,7 +64,8 @@ pub enum SourceResponse<T> {
 /// Http request(s) with a function to transform the data
 pub struct Request<T> {
     /// Reqwest request
-    requests: Vec<reqwest::Request>,
+    // requests: Vec<request::HttpRequest>,
+    requests: Vec<reqwest::RequestBuilder>,
     /// Function to parse response
     transform: Box<dyn Fn(&[bytes::Bytes]) -> Option<T>>,
 }
@@ -93,7 +96,7 @@ pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
         "webtoons.com" => webtoon::Webtoon,
         "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends,
         "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus,
-        "marvel.com" => marvel::Marvel
+        "marvel.com" => marvel::Marvel,
         "dcuniverseinfinite.com" => dcuniverseinfinite::DCUniverseInfinite::default()
     );
     Err(Error::UrlNotSupported(url.to_string()))
@@ -116,7 +119,7 @@ pub fn source_from_name(name: &str) -> Result<Box<dyn Source>> {
 /// Trait for interacting with comic book source
 /// Trait object can be created with `source_from_url` function
 #[async_trait::async_trait]
-pub trait Source {
+pub trait Source: Send {
     /// Name of source
     fn name(&self) -> String;
 

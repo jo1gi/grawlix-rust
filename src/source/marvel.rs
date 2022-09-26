@@ -24,13 +24,6 @@ impl Source for Marvel {
         "Marvel".to_string()
     }
 
-    fn create_client(&self) -> reqwest::Client {
-        reqwest::ClientBuilder::new()
-            .cookie_store(true)
-            .build()
-            .unwrap()
-    }
-
     fn id_from_url(&self, url: &str) -> Result<ComicId> {
         issue_id_match!(url,
             r"issue/(\d+)" => Other,
@@ -64,17 +57,17 @@ impl Source for Marvel {
             client: client,
             id_type: Series,
             url: "https://api.marvel.com/browse/comics?byType=comic_series&isDigital=1&limit=10000&byId={}",
-            transform: find_series_info
+            value: find_series_info
         )
     }
 
-    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<Request<Vec<Page>>> {
-        simple_request!(
+    fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
+        simple_response!(
             id: comicid,
             client: client,
             id_type: Issue,
             url: "https://bifrost.marvel.com/v1/catalog/digital-comics/web/assets/{}",
-            transform: find_pages
+            value: find_pages
         )
     }
 
@@ -84,34 +77,55 @@ impl Source for Marvel {
             client: client,
             id_type: Issue,
             url: "https://bifrost.marvel.com/v1/catalog/digital-comics/metadata/{}",
-            transform: parse_metadata
+            value: parse_metadata
         )
     }
 
     async fn authenticate(&mut self, client: &mut Client, creds: &Credentials) -> Result<()> {
-        if let Credentials::UsernamePassword(username, password) = creds {
+        // if let Credentials::UsernamePassword(username, password) = creds {
+        //     let mut headers = HeaderMap::new();
+        //     headers.insert("User-Agent", HeaderValue::from_static("aXMLRPC"));
+        //     headers.insert("Content-Type", HeaderValue::from_static("text/html; charset=utf-8"));
+        //     let response = client.post("https://api.marvel.com/xmlrpc/login_api_https.php")
+        //         .headers(headers)
+        //         .body(format!(
+        //             r#"
+        //             <?xml version="1.0" encoding="UTF-8"?>
+        //             <methodCall>
+        //                 <methodName>login</methodName>
+        //                 <params>
+        //                     <param><value><string>{username}</string></value></param>
+        //                     <param><value><string>{password}</string></value></param>
+        //                 </params>
+        //             </methodCall>
+        //            "#,
+        //             username=username,
+        //             password=password
+        //         ))
+        //         .send()
+        //         .await?;
+        //     // TODO: Find better way to add cookies
+        //     // TODO: Check valid login
+        //     let mut headers = HeaderMap::new();
+        //     headers.insert(
+        //         reqwest::header::COOKIE,
+        //         HeaderValue::from_str("PHPSESSID=1cltieehipbco7s08hcnhf14dp").unwrap()
+        //     );
+        //     *client = Client::builder()
+        //         .default_headers(headers)
+        //         .build()
+        //         .unwrap();
+        //     Ok(())
+        if let Credentials::ApiKey(apikey) = creds {
             let mut headers = HeaderMap::new();
-            headers.insert("User-Agent", HeaderValue::from_static("aXMLRPC"));
-            headers.insert("Content-Type", HeaderValue::from_static("text/html; charset=utf-8"));
-            client.post("https://api.marvel.com/xmlrpc/login_api_https.php")
-                .headers(headers)
-                .body(format!(
-                    r#"
-                    <?xml version="1.0" encoding="UTF-8"?>
-                    <methodCall>
-                        <methodName>login</methodName>
-                        <params>
-                            <param><value><string>{username}</string></value></param>
-                            <param><value><string>{password}</string></value></param>
-                        </params>
-                    </methodCall>
-                   "#,
-                    username=username,
-                    password=password
-                ))
-                .send()
-                .await?;
-            // TODO: Check valid login
+            headers.insert(
+                reqwest::header::COOKIE,
+                HeaderValue::from_str(&format!("PHPSESSID={}", apikey)).unwrap()
+            );
+            *client = Client::builder()
+                .default_headers(headers)
+                .build()
+                .unwrap();
             Ok(())
         } else {
             unreachable!()
@@ -136,18 +150,22 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
     )
 }
 
-fn find_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
-    todo!()
+fn find_series_info(_resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
+    // TODO: Implement
+    Some(SeriesInfo {
+        name: "Unknown".to_string()
+    })
 }
 
 fn find_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
-    Some(get_results(&resp[0])?[0]["pages"]
+    let pages: Vec<Page> = get_results(&resp[0])?[0]["pages"]
         .as_array()?
         .iter()
         .filter_map(|x| {
             Some(Page::from_url(&value_to_optstring(&x["assets"]["source"])?, "jpg"))
         })
-        .collect())
+        .collect();
+    Some(pages)
 }
 
 /// Parse metadata from Marvel Unlimited issue
@@ -163,7 +181,8 @@ fn parse_metadata(responses: &[bytes::Bytes]) -> Option<Metadata> {
         month: Some(date.1),
         day: Some(date.2),
         authors: issue_meta["creators"]["extended_list"]
-            .as_array()?
+            .as_array()
+            .unwrap_or(&Vec::new())
             .iter()
             .filter_map(|x| {
                 Some(Author {
@@ -180,7 +199,7 @@ fn parse_metadata(responses: &[bytes::Bytes]) -> Option<Metadata> {
 fn get_results(response: &bytes::Bytes) -> Option<serde_json::Value> {
     let root: serde_json::Value = resp_to_json(response)?;
     let results = &root["data"]["results"];
-    return Some(results.clone());
+    return Some(results.to_owned());
 }
 
 #[cfg(test)]

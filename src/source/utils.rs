@@ -55,7 +55,8 @@ macro_rules! source_request {
     // Multiple requests
     (requests: [$($request:expr),+], transform: $transform:expr) => {
         Ok::<_, crate::error::GrawlixDownloadError>(crate::source::Request {
-            requests: vec![$($request.build()?,)*],
+            // requests: vec![$($request,)*],
+            requests: vec![$($request,)*],
             transform: Box::new($transform)
         })
     };
@@ -89,7 +90,8 @@ macro_rules! simple_response {
             Ok::<_, crate::error::GrawlixDownloadError>(
                 crate::source::SourceResponse::Request(
                     crate::source::Request{
-                        requests: vec![$client.get(format!($url, x)).build()?],
+                        requests: vec![$client.get(format!($url, x))],
+                        // requests: vec![crate::source::HttpRequest::get(format!($url, x))],
                         transform: Box::new(|resp| {
                             let value = $transform(resp)?;
                             Some(SourceResponse::Value(value))
@@ -104,7 +106,7 @@ macro_rules! simple_response {
             Ok::<_, crate::error::GrawlixDownloadError>(
                 crate::source::SourceResponse::Request(
                     crate::source::Request{
-                        requests: vec![$client.get(format!($url, x)).build()?],
+                        requests: vec![$client.get(format!($url, x))],
                         transform: Box::new($transform)
                     }
                 )

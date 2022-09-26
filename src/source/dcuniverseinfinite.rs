@@ -18,6 +18,7 @@ pub struct DCUniverseInfinite {
     authorization_key: Option<String>
 }
 
+#[async_trait::async_trait]
 impl Source for DCUniverseInfinite {
 
     fn name(&self) -> String {
@@ -88,8 +89,6 @@ impl Source for DCUniverseInfinite {
                         new_client
                             .get("https://www.dcuniverseinfinite.com/api/comics/1/book/download/?page=1&quality=HD&trans=en")
                             .header("X-Auth-JWT", auth_jwt.as_str()?)
-                            .build()
-                            .ok()?
                     ],
                     transform: value_fn(&create_pages)
                 }))
@@ -97,9 +96,9 @@ impl Source for DCUniverseInfinite {
         )
     }
 
-    fn authenticate(&mut self, _client: &Client, creds: Credentials) -> Result<()> {
+    async fn authenticate(&mut self, _client: &mut Client, creds: &Credentials) -> Result<()> {
         if let Credentials::ApiKey(apikey) = creds {
-            self.authorization_key = Some(apikey);
+            self.authorization_key = Some(apikey.clone());
             Ok(())
         } else {
             Err(Error::FailedAuthentication("DC Universe Unlimited requires an api key to login".to_string()))

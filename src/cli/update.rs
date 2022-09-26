@@ -1,9 +1,9 @@
 use crate::{
     CliError,
-    utils::{self, get_all_links, write_comics},
+    utils::{self, get_all_links, write_comics, get_source_from_name},
     options::{Arguments, Config}
 };
-use grawlix::source::{ComicId, source_from_name, download_comics, get_all_ids, download_series_metadata};
+use grawlix::source::{ComicId, download_comics, get_all_ids, download_series_metadata};
 use thiserror::Error;
 use displaydoc::Display;
 use log::{info, warn, error, debug};
@@ -56,11 +56,10 @@ pub async fn add(args: &Arguments, config: &Config, inputs: &Vec<String>) -> std
     let links = get_all_links(args, inputs)?;
     let mut update_data = load_updatefile(&config.update_location)?;
     for link in links {
-        let source = utils::get_source(&link, config).await?;
+        let (source, client) = utils::get_source_from_url(&link, config).await?;
         let id = source.id_from_url(&link)?;
         debug!("Found id: {:?}", id);
         if let ComicId::Series(series_id) = &id {
-            let client = source.create_client();
             let series_info = download_series_metadata(&client, &source, &id).await?;
             if !update_data.iter().any(|x| x.source == source.name() && &x.id == series_id) {
                 update_data.push(UpdateSeries {
@@ -94,9 +93,7 @@ pub async fn update(config: &Config) -> std::result::Result<(), CliError> {
     let mut update_data = load_updatefile(&config.update_location)?;
     for series in &mut update_data {
         info!("Searching for updates in {}", series.name);
-        // Creating source
-        let source = source_from_name(&series.source)?;
-        let client = source.create_client();
+        let (source, client) = get_source_from_name(&series.source, config).await?;
         // Finding new ids
         let ids: Vec<ComicId> = get_all_ids(&client, ComicId::Series(series.id.clone()), &source).await?
             .into_iter()

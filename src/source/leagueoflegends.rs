@@ -78,8 +78,8 @@ impl Source for LeagueOfLegends {
                     client.get(format!(
                         "https://universe-comics.leagueoflegends.com/comics/en_us/{}/index.json",
                         issueid
-                    )).build()?,
-                    client.get(info_url(issueid)).build()?
+                    )),
+                    client.get(info_url(issueid))
                 ],
                 transform: value_fn(&response_to_pages)
             }))

@@ -87,7 +87,10 @@ pub struct Config {
     pub update_location: String,
     /// DC Universe Infinite Config
     #[serde(default = "Default::default")]
-    pub dcuniverseinfinite: Option<SourceData>
+    pub dcuniverseinfinite: Option<SourceData>,
+    /// Marvel Config
+    #[serde(default = "Default::default")]
+    pub marvel: Option<SourceData>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

@@ -6,10 +6,11 @@ use crate::{
 use grawlix::{
     error::GrawlixIOError,
     comic::Comic,
-    source::{Source, Credentials, source_from_url, get_all_ids, download_comics}
+    source::{Source, Credentials, source_from_url, get_all_ids, download_comics, source_from_name}
 };
 use log::{info, debug, error};
 use std::{io::Write, process::exit, sync::{Arc, atomic::AtomicUsize}};
+use reqwest::Client;
 
 const PROGRESS_FILE: &str = ".grawlix-progress";
 
@@ -17,26 +18,43 @@ const PROGRESS_FILE: &str = ".grawlix-progress";
 fn get_source_settings(source: &Box<dyn Source>, config: &Config) -> Option<SourceData> {
     match source.name().as_str() {
         "DC Universe Infinite" => config.dcuniverseinfinite.clone(),
+        "Marvel" => config.marvel.clone(),
         _ => None
     }
 }
 
-/// Create source from url and authenticate if credentials are available
-pub async fn get_source(url: &str, config: &Config) -> Result<Box<dyn Source>> {
-    let mut source = source_from_url(url)?;
+/// Authenticate `source` with credentials from `config`
+pub async fn authenticate_source(source: &mut Box<dyn Source>, client: &mut Client, config: &Config) -> Result<()> {
     if let Some(sourcedata) = get_source_settings(&source, config) {
         // TODO: Don't crash when missing credentials
-        debug!("Authenticating source");
         let credentials: Credentials = sourcedata.try_into()?;
-        let client = source.create_client();
-        source.authenticate(&client, credentials)?;
+        debug!("Authenticating source");
+        source.authenticate(client, &credentials).await?;
     }
-    Ok(source)
+    Ok(())
+}
+
+/// Create source from url and authenticate if credentials are available
+pub async fn get_source_from_url(url: &str, config: &Config) -> Result<(Box<dyn Source>, Client)> {
+    let mut source = source_from_url(url)?;
+    let mut client = source.create_client();
+    if source.pages_require_authentication() || source.metadata_require_authentication() {
+        authenticate_source(&mut source, &mut client, config).await?;
+    }
+    Ok((source, client))
+}
+
+pub async fn get_source_from_name(name: &str, config: &Config) -> Result<(Box<dyn Source>, Client)> {
+    let mut source = source_from_name(name)?;
+    let mut client = source.create_client();
+    if source.pages_require_authentication() || source.metadata_require_authentication() {
+        authenticate_source(&mut source, &mut client, config).await?;
+    }
+    Ok((source, client))
 }
 
 async fn download_comics_from_url(url: &str, config: &Config) -> Result<Vec<Comic>> {
-    let source = get_source(url, config).await?;
-    let client = source.create_client();
+    let (source, client) = get_source_from_url(url, config).await?;
     let comicid = source.id_from_url(url)?;
     debug!("Got id from url: {:?}", comicid);
     let all_ids = get_all_ids(&client, comicid, &source).await?;

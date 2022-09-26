@@ -33,6 +33,7 @@ impl Source for Flipp {
                 eid
             );
             source_request!(
+                // requests: HttpRequest::get(&url),
                 requests: client.get(url),
                 transform: move |resp| {
                     let site = std::str::from_utf8(&resp[0]).ok()?;
@@ -115,6 +116,7 @@ impl Source for Flipp {
         if let ComicId::Issue(url) | ComicId::IssueWithMetadata(url, _) = comicid {
             Ok(SourceResponse::Request(source_request!(
                 requests: client.get(url),
+                // requests: HttpRequest::get(&url),
                 transform: value_fn(&response_to_pages)
             ).unwrap()))
         } else { Err(Error::FailedDownload(self.name())) }
