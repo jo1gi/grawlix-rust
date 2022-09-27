@@ -152,6 +152,7 @@ pub struct Identifier {
     pub id: String,
 }
 
+/// Convert a string in the form "year-month-day" to a tuple with those values
 pub fn date_from_str(date: &str) -> Option<(u32, u32, u32)> {
     let tmp: Vec<u32> = date.split("-")
         .filter_map(|x| x.parse::<u32>().ok())

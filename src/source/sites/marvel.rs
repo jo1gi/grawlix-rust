@@ -26,7 +26,8 @@ impl Source for Marvel {
 
     fn id_from_url(&self, url: &str) -> Result<ComicId> {
         issue_id_match!(url,
-            r"issue/(\d+)" => Other,
+            r"https://read.marvel.com/#/book/(\d+)" => Issue,
+            r"issue/(\d+/.+)" => Other,
             r"series/(\d+)" => Series
         )
     }
@@ -36,7 +37,7 @@ impl Source for Marvel {
             id: otherid,
             client: client,
             id_type: Other,
-            url: "https://www.marvel.com/secure/purchasepathwidget/{}",
+            url: "https://www.marvel.com/comics/issue/{}",
             transform: find_correct_id
         )
     }
@@ -135,7 +136,8 @@ impl Source for Marvel {
 
 fn find_correct_id(resp: &[bytes::Bytes]) -> Option<ComicId> {
     let data = std::str::from_utf8(&resp[0]).ok()?;
-    let re = Regex::new(r#"data-digitalid="(\d+)"#).unwrap();
+    let re = Regex::new(r#"digital_comic_id: "(\d+)""#).unwrap();
+    // let re = Regex::new(r#"data-digitalid="(\d+)"#).unwrap();
     Some(ComicId::Issue(first_capture(&re, data)?))
 }
 
@@ -205,42 +207,57 @@ fn get_results(response: &bytes::Bytes) -> Option<serde_json::Value> {
 #[cfg(test)]
 mod tests {
 
-    use crate::source::{Source, ComicId};
+    use crate::source::{Source, ComicId, utils::tests::response_from_testfile};
     use crate::metadata::{Author, AuthorType, Metadata};
 
     #[test]
-    fn series_ids() {
-        let data = std::fs::read("./tests/source_data/marvel_series.json").unwrap();
-        let responses = [data.into()];
+    fn parse_series_ids() {
+        let responses = response_from_testfile("marvel_series.json");
         let ids = super::find_series_ids(&responses).unwrap();
-        println!("{:#?}", ids);
         assert_eq!(ids.len(), 22);
     }
 
     #[test]
-    fn pages() {
-        let data = std::fs::read("./tests/source_data/marvel_pages.json").unwrap();
-        let responses = [data.into()];
+    fn number_of_pages() {
+        let responses = response_from_testfile("marvel_pages.json");
         let pages = super::find_pages(&responses).unwrap();
         assert_eq!(pages.len(), 3);
     }
 
     #[test]
-    fn id() {
+    fn otherid_from_url() {
         let source = super::Marvel;
         assert_eq!(
             source.id_from_url("https://www.marvel.com/comics/issue/42768/hawkeye_2012_1").unwrap(),
-            ComicId::Other("42768".to_string())
+            ComicId::Other("42768/hawkeye_2012_1".to_string())
         );
+    }
+
+    #[test]
+    fn seriesid_from_url() {
+        let source = super::Marvel;
         assert_eq!(
             source.id_from_url("https://www.marvel.com/comics/series/16309/hawkeye_2012_-_2015").unwrap(),
             ComicId::Series("16309".to_string())
         );
-        let data = std::fs::read("./tests/source_data/marvel_issue.html").unwrap();
-        let responses = [data.into()];
+    }
+
+    #[test]
+    fn issueid_from_url() {
+        let source = super::Marvel;
+        assert_eq!(
+            source.id_from_url("https://read.marvel.com/#/book/3257").unwrap(),
+            ComicId::Issue("3257".to_string())
+        );
+    }
+
+
+    #[test]
+    fn find_issue_id_from_otherid() {
+        let responses = response_from_testfile("marvel_issue.html");
         assert_eq!(
             super::find_correct_id(&responses),
-            Some(ComicId::Issue("28403".to_string()))
+            Some(ComicId::Issue("3257".to_string()))
         );
     }
 

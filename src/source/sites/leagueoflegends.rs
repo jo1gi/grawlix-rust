@@ -117,7 +117,7 @@ fn response_to_pages(responses: &[bytes::Bytes]) -> Option<Vec<Page>> {
         .flatten()
         // Extracting pages
         .map(|issue| {
-            Some(Page::from_url(issue["uri"].as_str()?, "jpg"))
+            Some(Page::from_url(issue["2x"].as_str()?, "jpg"))
         })
         .collect::<Option<Vec<Page>>>()?;
     let info = resp_to_json::<serde_json::Value>(&responses[1])?;
@@ -159,13 +159,31 @@ fn response_to_metadata(responses: &[bytes::Bytes]) -> Option<Metadata> {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::Source;
+    use crate::source::{Source, ComicId, utils::tests::response_from_testfile};
     use crate::metadata::{Author, AuthorType};
 
     #[test]
+    fn issueid_from_url() {
+        let source = super::LeagueOfLegends;
+        assert_eq!(
+            source.id_from_url("https://universe.leagueoflegends.com/en_us/comic/star-guardian/issue-1/0/").unwrap(),
+            ComicId::Issue("star-guardian/issue-1".to_string())
+        );
+    }
+
+    #[test]
+    fn seriesid_from_url() {
+        let source = super::LeagueOfLegends;
+        assert_eq!(
+            source.id_from_url("https://universe.leagueoflegends.com/en_us/comic/star-guardian").unwrap(),
+            ComicId::Series("star-guardian".to_string())
+        );
+    }
+
+    #[test]
     fn metadata() {
-        let resp = std::fs::read("./tests/source_data/leagueoflegends_issue_metadata.json").unwrap();
-        let metadata = super::response_to_metadata(&[resp.into()]).unwrap();
+        let responses = response_from_testfile("leagueoflegends_issue_metadata.json");
+        let metadata = super::response_to_metadata(&responses).unwrap();
         assert_eq!(
             metadata,
             crate::metadata::Metadata {
@@ -185,7 +203,7 @@ mod tests {
     }
 
     #[test]
-    fn pages() {
+    fn number_of_pages() {
         let meta_resp = std::fs::read("./tests/source_data/leagueoflegends_issue_metadata.json").unwrap();
         let page_resp = std::fs::read("./tests/source_data/leagueoflegends_issue.json").unwrap();
         let pages = super::response_to_pages(&[page_resp.into(), meta_resp.into()]).unwrap();
@@ -196,11 +214,9 @@ mod tests {
     fn series() {
         // Setup
         let source = super::LeagueOfLegends;
-        let seriesid = source.id_from_url("https://universe.leagueoflegends.com/en_us/comic/sentinelsoflight")
-            .unwrap();
+        let seriesid = ComicId::Series("sentinelsoflight".to_string());
         let client = reqwest::Client::new();
-        let data = std::fs::read("./tests/source_data/leagueoflegends_series.json").unwrap();
-        let responses = [data.into()];
+        let responses = response_from_testfile("leagueoflegends_series.json");
         // Series issues
         let transform = source.get_series_ids(&client, &seriesid).unwrap().transform;
         let issues = transform(&responses).unwrap();

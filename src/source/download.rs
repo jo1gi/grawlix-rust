@@ -40,12 +40,12 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
             let client = &client;
             async move {
                 let pages_response = source.get_pages(&client, &i)?;
-                let pages = eval_source_response(&client, pages_response).await?;
+                let pages = eval_source_response( pages_response).await?;
                 let id_str = i.inner().clone();
                 let mut metadata = match i {
                     ComicId::Issue(_) => {
                         let metadata_response = source.get_metadata(&client, &i)?;
-                        eval_source_response(&client, metadata_response).await?
+                        eval_source_response(metadata_response).await?
                     },
                     ComicId::IssueWithMetadata(_, meta) => meta,
                     _ => unreachable!()
@@ -69,7 +69,7 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
 /// Download series metadata
 pub async fn download_series_metadata(client: &Client, source: &Box<dyn Source>, comicid: &ComicId) -> Result<SeriesInfo> {
     let request = source.get_series_info(client, comicid)?;
-    let series_info = eval_source_response(&client, request).await?;
+    let series_info = eval_source_response(request).await?;
     Ok(series_info)
 }
 
@@ -83,25 +83,25 @@ pub async fn download_comics_metadata(
     let mut metadata = Vec::new();
     for i in all_ids {
         let response = source.get_metadata(&client, &i)?;
-        let content = eval_source_response(&mut client, response).await?;
+        let content = eval_source_response(response).await?;
         metadata.push(content);
     }
     return Ok(metadata);
 }
 
-async fn eval_source_response<T>(client: &Client, response: SourceResponse<T>) -> Result<T> {
+async fn eval_source_response<T>(response: SourceResponse<T>) -> Result<T> {
     let mut response = response;
     loop {
         match response {
             SourceResponse::Value(v) => return Ok(v),
             SourceResponse::Request(r) => {
-                response = make_request(client, r).await?;
+                response = make_request(r).await?;
             }
         }
     }
 }
 
-async fn make_request<T>(client: &Client, request: Request<T>) -> Result<T> {
+async fn make_request<T>(request: Request<T>) -> Result<T> {
     let mut responses = Vec::new();
     for request in request.requests {
         let bytes = request
@@ -109,15 +109,9 @@ async fn make_request<T>(client: &Client, request: Request<T>) -> Result<T> {
             .await?
             .bytes()
             .await?;
-        // let response = client.execute(i).await?;
-        // let bytes = response.bytes().await?;
         responses.push(bytes);
     }
-    (request.transform)(&responses)
-        .ok_or_else(|| {
-            log::debug!("{:#?}", responses);
-            Error::FailedResponseParse
-        })
+    (request.transform)(&responses).ok_or(Error::FailedResponseParse)
 }
 
 #[async_recursion(?Send)]
@@ -128,7 +122,7 @@ pub async fn get_all_ids(
 ) -> Result<Vec<ComicId>> {
     Ok(match comicid {
         ComicId::Other(_) => {
-            let new_id = make_request(client, source.get_correct_id(client, &comicid)?).await?;
+            let new_id = make_request(source.get_correct_id(client, &comicid)?).await?;
             get_all_ids(client, new_id, source).await?
         },
         ComicId::OtherWithMetadata(id, meta) => {
@@ -140,7 +134,7 @@ pub async fn get_all_ids(
         }
         ComicId::Series(_) => {
             // Ids of each issue in series
-            let new_ids = make_request(client, source.get_series_ids(client, &comicid)?).await?;
+            let new_ids = make_request(source.get_series_ids(client, &comicid)?).await?;
             // let mut result = Vec::new();
             let evaluated_ids = stream::iter(new_ids)
                 .map(|new_id| async move {

@@ -1,3 +1,6 @@
+#[cfg(test)]
+pub mod tests;
+
 use super::{Result, Error, ComicId, SourceResponse};
 
 /// User Agent of Chrome on Android

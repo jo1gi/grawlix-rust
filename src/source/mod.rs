@@ -1,14 +1,16 @@
+/// Functions for downloading comics
 mod download;
-mod request;
 /// Utility functions and macros for implementing `Source`
 mod utils;
+/// Implementations of `Source` for different sites
+mod sites;
 
-mod dcuniverseinfinite;
-mod flipp;
-mod leagueoflegends;
-mod mangaplus;
-mod marvel;
-mod webtoon;
+pub use download::{
+    download_comics_from_url, download_comics, download_comics_metadata, create_default_client,
+    get_all_ids, download_series_metadata
+};
+
+pub use sites::{source_from_name, source_from_url};
 
 use crate::{
     error::GrawlixDownloadError as Error,
@@ -17,10 +19,7 @@ use crate::{
 };
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-pub use download::{
-    download_comics_from_url, download_comics, download_comics_metadata, create_default_client, get_all_ids, download_series_metadata
-};
-pub use request::HttpRequest;
+
 
 /// Result type with `GrawlixDownloadError`
 type Result<T> = std::result::Result<T, Error>;
@@ -64,7 +63,6 @@ pub enum SourceResponse<T> {
 /// Http request(s) with a function to transform the data
 pub struct Request<T> {
     /// Reqwest request
-    // requests: Vec<request::HttpRequest>,
     requests: Vec<reqwest::RequestBuilder>,
     /// Function to parse response
     transform: Box<dyn Fn(&[bytes::Bytes]) -> Option<T>>,
@@ -77,44 +75,6 @@ pub enum Credentials {
 }
 
 
-/// Find first matching regular expression and evaluated corresponding expression
-macro_rules! match_re {
-    ($url:expr, $($pattern:expr => $e:expr),+) => (
-        $(
-            let re = regex::Regex::new($pattern).unwrap();
-            if re.is_match($url) {
-                return Ok(Box::new($e));
-            }
-        )+
-)
-}
-
-/// Create a corresponding `Source` trait object from url
-pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
-    match_re!(url,
-        "flipp.dk" => flipp::Flipp,
-        "webtoons.com" => webtoon::Webtoon,
-        "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends,
-        "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus,
-        "marvel.com" => marvel::Marvel,
-        "dcuniverseinfinite.com" => dcuniverseinfinite::DCUniverseInfinite::default()
-    );
-    Err(Error::UrlNotSupported(url.to_string()))
-}
-
-/// Create source object from name
-pub fn source_from_name(name: &str) -> Result<Box<dyn Source>> {
-    let lower = name.to_lowercase();
-    Ok(match lower.as_str() {
-        "flipp" => Box::new(flipp::Flipp),
-        "webtoon" => Box::new(webtoon::Webtoon),
-        "league of legends" => Box::new(leagueoflegends::LeagueOfLegends),
-        "manga plus" => Box::new(mangaplus::MangaPlus),
-        "marvel" => Box::new(marvel::Marvel),
-        "dc" | "dcuniverseinfinite" => Box::new(dcuniverseinfinite::DCUniverseInfinite::default()),
-        _ => return Err(Error::InvalidSourceName(name.to_string()))
-    })
-}
 
 /// Trait for interacting with comic book source
 /// Trait object can be created with `source_from_url` function

@@ -139,15 +139,20 @@ fn response_to_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{metadata::Author, source::{ComicId, Source}};
+    use crate::{metadata::Author, source::{ComicId, Source, utils::tests::response_from_testfile}};
 
     #[test]
-    fn issue_id() {
+    fn issueid_from_url() {
         let source = super::Webtoon;
         assert_eq!(
             source.id_from_url("https://www.webtoons.com/en/challenge/the-weekly-roll/ch-116-grimdahls-folly/viewer?title_no=358889&episode_no=118").unwrap(),
             ComicId::Issue("challenge/the-weekly-roll/ch-116-grimdahls-folly/viewer?title_no=358889&episode_no=118".to_string())
         );
+    }
+
+    #[test]
+    fn seriesid_from_url() {
+        let source = super::Webtoon;
         assert_eq!(
             source.id_from_url("https://www.webtoons.com/en/challenge/the-weekly-roll/list?title_no=358889").unwrap(),
             ComicId::Series("challenge/the-weekly-roll/list?title_no=358889".to_string())
@@ -157,11 +162,11 @@ mod tests {
     #[test]
     fn series() {
         let source = super::Webtoon;
-        let series_id = source.id_from_url("https://www.webtoons.com/en/challenge/the-weekly-roll/list?title_no=358889").unwrap();
+        let series_id = source.id_from_url("https://www.webtoons.com/en/challenge/the-weekly-roll/list?title_no=358889")
+            .unwrap();
         let client = source.create_client();
         let parser = source.get_series_ids(&client, &series_id).unwrap().transform;
-        let data = std::fs::read("./tests/source_data/webtoon_series.html").unwrap();
-        let responses = [data.into()];
+        let responses = response_from_testfile("webtoon_series.html");
         let issues = parser(&responses).unwrap();
         assert_eq!(issues.len(), 116);
         let info = super::response_series_info(&responses).unwrap();
@@ -169,9 +174,9 @@ mod tests {
     }
 
     #[test]
-    fn pages() {
-        let responses = std::fs::read("./tests/source_data/webtoon_issue.html").unwrap();
-        let pages = super::response_to_pages(&[responses.into()]).unwrap();
+    fn get_correct_number_of_pages() {
+        let responses = response_from_testfile("webtoon_issue.html");
+        let pages = super::response_to_pages(&responses).unwrap();
         assert_eq!(pages.len(), 6);
     }
 

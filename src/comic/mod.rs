@@ -16,23 +16,6 @@ use log::debug;
 pub struct Comic {
     pub metadata: Metadata,
     pub pages: Vec<Page>,
-    #[serde(skip_serializing,skip_deserializing)]
-    pub container: Option<Container>
-}
-
-#[derive(Debug)]
-pub struct Container {
-    path: String,
-    format: ComicFormat,
-}
-
-impl Container {
-    pub fn cbz(path: &str) -> Self {
-        Self {
-            path: path.to_string(),
-            format: ComicFormat::CBZ
-        }
-    }
 }
 
 #[derive(Deserialize, Debug, Clone)]

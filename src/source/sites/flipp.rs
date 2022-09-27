@@ -170,15 +170,20 @@ fn response_to_pages(responses: &[bytes::Bytes]) -> Option<Vec<Page>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::{ComicId, Source};
+    use crate::source::{ComicId, Source, utils::tests::response_from_testfile};
 
     #[test]
-    fn issue_id() {
+    fn otherid_from_url() {
         let source = super::Flipp;
         assert_eq!(
             source.id_from_url("https://reader.flipp.dk/html5/reader/production/default.aspx?pubname=&edid=31d29e20-fd60-48ad-96b2-79a3d9d65788").unwrap(),
             ComicId::Other("31d29e20-fd60-48ad-96b2-79a3d9d65788".to_string())
         );
+    }
+
+    #[test]
+    fn seriesid_from_url() {
+        let source = super::Flipp;
         assert_eq!(
             source.id_from_url("https://magasiner.flipp.dk/flipp/web-app/#/publications/fa7c63ad-0a48-445b-9a17-7d536006902a").unwrap(),
             ComicId::Series("fa7c63ad-0a48-445b-9a17-7d536006902a".to_string())
@@ -186,9 +191,9 @@ mod tests {
     }
 
     #[test]
-    fn pages() {
-        let responses = std::fs::read("./tests/source_data/flipp_issue.json").unwrap();
-        let pages = super::response_to_pages(&[responses.into()]).unwrap();
+    fn number_of_pages() {
+        let responses = response_from_testfile("flipp_issue.json");
+        let pages = super::response_to_pages(&responses).unwrap();
         assert_eq!(pages.len(), 259);
     }
 }

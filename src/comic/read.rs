@@ -1,6 +1,6 @@
 use crate::{
     error::GrawlixIOError as Error,
-    comic::{Comic, Page, Container},
+    comic::{Comic, Page},
     metadata::Metadata
 };
 
@@ -23,10 +23,7 @@ impl super::Comic {
         let file = std::fs::File::open(path)?;
         let mut zip = zip::ZipArchive::new(file)?;
         // Creating `Comic` object
-        let mut comic = Comic {
-            container: Some(Container::cbz(path)),
-            ..Default::default()
-        };
+        let mut comic = Comic::default();
         // Adding files
         for i in 0..zip.len() {
             let mut file = zip.by_index(i)?;

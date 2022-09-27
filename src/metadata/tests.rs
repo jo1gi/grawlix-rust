@@ -33,3 +33,11 @@ fn comicrack_import() {
     let input = std::fs::read_to_string("./tests/metadata_data/comicrack.xml").unwrap();
     assert_eq!(Metadata::from_comicrack_str(input.as_ref()), test_metadata());
 }
+
+#[test]
+fn date_from_str() {
+    assert_eq!(
+        super::date_from_str("2022-09-27"),
+        Some((2022,09,27))
+    );
+}
