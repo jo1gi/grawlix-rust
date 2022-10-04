@@ -1,9 +1,8 @@
 use crate::{
     source::{
-        Source, ComicId, Result, Request, SourceResponse, SeriesInfo, Credentials,
+        Source, ComicId, Result, SourceResponse, SeriesInfo, Credentials,
         utils::{
-            issue_id_match, source_request, first_capture, value_to_optstring, resp_to_json,
-            simple_request, simple_response
+            issue_id_match, first_capture, value_to_optstring, resp_to_json, simple_response
         },
     },
     metadata::{self, Metadata, Author},
@@ -46,23 +45,23 @@ impl Source for Marvel {
     //         .unwrap()
     // }
 
-    fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<Request<ComicId>> {
-        simple_request!(
+    fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<SourceResponse<ComicId>> {
+        simple_response!(
             id: otherid,
             client: client,
             id_type: Other,
             url: "https://www.marvel.com/comics/issue/{}",
-            transform: find_correct_id
+            value: find_correct_id
         )
     }
 
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
-        simple_request!(
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>> {
+        simple_response!(
             id: seriesid,
             client: client,
             id_type: Series,
             url: "https://api.marvel.com/browse/comics?byType=comic_series&isDigital=1&limit=10000&byId={}",
-            transform: find_series_ids
+            value: find_series_ids
         )
     }
 

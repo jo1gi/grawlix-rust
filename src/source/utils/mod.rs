@@ -1,5 +1,6 @@
 #[cfg(test)]
 pub mod tests;
+// pub mod general_source;
 
 use super::{Result, Error, ComicId, SourceResponse};
 
@@ -57,11 +58,17 @@ pub fn issue_id_match_internal(url: &str, pairs: &[(&str, Box<dyn Fn(String) -> 
 macro_rules! source_request {
     // Multiple requests
     (requests: [$($request:expr),+], transform: $transform:expr) => {
-        Ok::<_, crate::error::GrawlixDownloadError>(crate::source::Request {
-            // requests: vec![$($request,)*],
-            requests: vec![$($request,)*],
-            transform: Box::new($transform)
-        })
+        Ok::<_, crate::error::GrawlixDownloadError>(
+            crate::source::SourceResponse::Request(
+                crate::source::Request {
+                    requests: vec![$($request,)*],
+                    transform: Box::new(move |resp| {
+                        let value = $transform(resp)?;
+                        Some(SourceResponse::Value(value))
+                    })
+                }
+            )
+        )
     };
     // One request
     (requests: $request:expr, transform: $transform:expr) => {
@@ -73,18 +80,6 @@ macro_rules! source_request {
 }
 pub(super) use source_request;
 
-/// Simply create sourcerequest
-macro_rules! simple_request {
-    (id: $id:expr, client: $client:expr, id_type: $idtype:ident, url: $url:expr, transform: $transform:expr) => {
-        if let crate::source::ComicId::$idtype(x) = $id {
-            crate::source::utils::source_request!(
-                requests: $client.get(format!($url, x)),
-                transform: $transform
-            )
-        } else { Err(crate::source::Error::FailedResponseParse) }
-    }
-}
-pub(super) use simple_request;
 
 /// Simply create SourceResponse
 macro_rules! simple_response {

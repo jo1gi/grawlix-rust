@@ -124,7 +124,8 @@ pub async fn get_all_ids(
 ) -> Result<Vec<ComicId>> {
     Ok(match comicid {
         ComicId::Other(_) => {
-            let new_id = make_request(source.get_correct_id(client, &comicid)?).await?;
+            let new_id_request = source.get_correct_id(client, &comicid)?;
+            let new_id = eval_source_response(new_id_request).await?;
             get_all_ids(client, new_id, source).await?
         },
         ComicId::OtherWithMetadata(id, meta) => {
@@ -136,7 +137,7 @@ pub async fn get_all_ids(
         }
         ComicId::Series(_) => {
             // Ids of each issue in series
-            let new_ids = make_request(source.get_series_ids(client, &comicid)?).await?;
+            let new_ids = eval_source_response(source.get_series_ids(client, &comicid)?).await?;
             // let mut result = Vec::new();
             let evaluated_ids = stream::iter(new_ids)
                 .map(|new_id| async move {

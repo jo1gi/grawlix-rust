@@ -99,13 +99,13 @@ pub trait Source: Send {
     /// This is only meant to be called if the source returns the `ComicId::Other` type in
     /// `id_from_url` or `get_series_ids`.
     #[allow(unused_variables)]
-    fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<Request<ComicId>> {
+    fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<SourceResponse<ComicId>> {
         unreachable!()
     }
 
     /// Retrieves `ComicId` for all comics in series
     /// `seriesid` has to be a `ComicId::Series`
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>>;
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>>;
 
     /// Creates `SourceREsponse` to download comic metadata
     fn get_metadata(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Metadata>>;

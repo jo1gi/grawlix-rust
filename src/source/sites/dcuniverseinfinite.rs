@@ -2,8 +2,8 @@ use crate::{
     comic::{Page, PageType, PageEncryptionScheme, OnlinePage},
     metadata::{Metadata, Author, AuthorType},
     source::{
-        Source, Result, Error, ComicId, SeriesInfo, Request, SourceResponse, Credentials,
-        utils::{issue_id_match, simple_response, simple_request, source_request, resp_to_json, value_fn}
+        Source, Result, Error, ComicId, SeriesInfo, SourceResponse, Credentials,
+        utils::{issue_id_match, simple_response, resp_to_json, value_fn}
     }
 };
 use reqwest::{Client, header};
@@ -44,13 +44,13 @@ impl Source for DCUniverseInfinite {
         )
     }
 
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
-        simple_request!(
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>> {
+        simple_response!(
             id: seriesid,
             client: client,
             id_type: Series,
             url: "https://www.dcuniverseinfinite.com/api/comics/1/series/{}/?trans=en",
-            transform: find_series_ids
+            value: find_series_ids
         )
     }
 

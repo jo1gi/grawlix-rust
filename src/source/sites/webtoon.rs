@@ -3,10 +3,9 @@ use std::collections::HashMap;
 use crate::{
     comic::Page, metadata::{Author, AuthorType, Metadata},
     source::{
-        ComicId, Error, Request, Result, Source, SourceResponse, SeriesInfo,
+        ComicId, Error, Result, Source, SourceResponse, SeriesInfo,
         utils::{
-            source_request, first_text, first_attr, issue_id_match, value_fn,
-            simple_response, ANDROID_USER_AGENT
+            first_text, first_attr, issue_id_match, simple_response, source_request, ANDROID_USER_AGENT
         }
     }};
 use reqwest::{Client, header};
@@ -39,13 +38,13 @@ impl Source for Webtoon {
         id_from_url(url)
     }
 
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>> {
         if let ComicId::Series(x) = seriesid {
             source_request!(
                 requests:
                     client.get(format!("https://m.webtoons.com/en/{}", x))
                         .header("User-Agent", ANDROID_USER_AGENT),
-                transform: |resp| {
+                transform: |resp: &[bytes::Bytes]| {
                     let html = std::str::from_utf8(&resp[0]).ok()?;
                     let doc = Html::parse_document(html);
                     let issues = doc.select(&Selector::parse("ul#_episodeList").unwrap()).next()?;
@@ -54,7 +53,7 @@ impl Source for Webtoon {
                             let link = issue.value().attr("href")?;
                             id_from_url(link).ok()
                         })
-                        .collect()
+                        .collect::<Option<Vec<ComicId>>>()
                 }
             )
         } else { Err(Error::FailedResponseParse) }
@@ -62,12 +61,12 @@ impl Source for Webtoon {
 
     fn get_series_info(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
         if let ComicId::Series(x) = seriesid {
-            Ok(SourceResponse::Request(source_request!(
+            source_request!(
                 requests:
                     client.get(format!("https://m.webtoons.com/en/{}", x))
                         .header("User-Agent", ANDROID_USER_AGENT),
-                transform: value_fn(&response_series_info)
-            ).unwrap()))
+                transform: response_series_info
+            )
         } else { Err(Error::FailedResponseParse) }
     }
 
@@ -140,7 +139,13 @@ fn response_to_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{metadata::Author, source::{ComicId, Source, utils::tests::response_from_testfile}};
+    use crate::{
+        metadata::Author,
+        source::{
+            ComicId, Source,
+            utils::tests::{response_from_testfile, transform_from_source_response}
+        }
+    };
 
     #[test]
     fn issueid_from_url() {
@@ -166,9 +171,11 @@ mod tests {
         let series_id = source.id_from_url("https://www.webtoons.com/en/challenge/the-weekly-roll/list?title_no=358889")
             .unwrap();
         let client = source.create_client();
-        let parser = source.get_series_ids(&client, &series_id).unwrap().transform;
+        let parser = transform_from_source_response(
+            source.get_series_ids(&client, &series_id)
+        );
         let responses = response_from_testfile("webtoon_series.html");
-        let issues = parser(&responses).unwrap();
+        let issues = parser(&responses);
         assert_eq!(issues.len(), 116);
         let info = super::response_series_info(&responses).unwrap();
         assert_eq!(info.name, "The Weekly Roll".to_string());

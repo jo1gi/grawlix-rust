@@ -1,7 +1,7 @@
 use crate::{
     source::{
-        Source, ComicId, Result, SourceResponse, Request, Error, SeriesInfo,
-        utils::{issue_id_match, source_request, simple_response, resp_to_json, value_fn}
+        Source, ComicId, Result, SourceResponse, Error, SeriesInfo,
+        utils::{issue_id_match, source_request, simple_response, resp_to_json}
     },
     comic::Page,
     metadata::{Metadata, Author, AuthorType},
@@ -23,12 +23,12 @@ impl Source for LeagueOfLegends {
         )
     }
 
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>> {
         if let ComicId::Series(id) = seriesid {
             let sid = id.clone();
             source_request!(
                 requests: client.get(info_url(id)),
-                transform: move |responses| {
+                transform: |responses: &[bytes::Bytes]| {
                     resp_to_json::<serde_json::Value>(&responses[0])?
                         .get("issues")?
                         .as_array()?
@@ -36,7 +36,7 @@ impl Source for LeagueOfLegends {
                         .map(|issue| {
                             Some(ComicId::Issue(format!("{}/{}", sid, issue["id"].as_str()?)))
                         })
-                        .collect()
+                        .collect::<Option<Vec<ComicId>>>()
                 }
             )
         } else { Err(Error::FailedResponseParse) }
@@ -73,16 +73,15 @@ impl Source for LeagueOfLegends {
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
         if let ComicId::Issue(issueid) = comicid {
-            Ok(SourceResponse::Request(Request{
-                requests: vec![
-                    client.get(format!(
+            source_request!(
+                requests: client.get(
+                    format!(
                         "https://universe-comics.leagueoflegends.com/comics/en_us/{}/index.json",
                         issueid
-                    )),
-                    client.get(info_url(issueid))
-                ],
-                transform: value_fn(&response_to_pages)
-            }))
+                    )
+                ),
+                transform: response_to_pages
+            )
         } else { Err(Error::FailedResponseParse) }
     }
 
@@ -160,7 +159,7 @@ fn response_to_metadata(responses: &[bytes::Bytes]) -> Option<Metadata> {
 
 #[cfg(test)]
 mod tests {
-    use crate::source::{Source, ComicId, utils::tests::response_from_testfile};
+    use crate::source::{Source, ComicId, utils::tests::{response_from_testfile, transform_from_source_response}};
     use crate::metadata::{Author, AuthorType};
 
     #[test]
@@ -219,8 +218,10 @@ mod tests {
         let client = reqwest::Client::new();
         let responses = response_from_testfile("leagueoflegends_series.json");
         // Series issues
-        let transform = source.get_series_ids(&client, &seriesid).unwrap().transform;
-        let issues = transform(&responses).unwrap();
+        let transform = transform_from_source_response(
+            source.get_series_ids(&client, &seriesid)
+        );
+        let issues = transform(&responses);
         assert_eq!(issues.len(), 6);
         if let super::ComicId::Issue(issueid) = &issues[3] {
             assert_eq!("sentinelsoflight/issue-4", issueid);

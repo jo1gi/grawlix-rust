@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::{
     source::{
-        Source, SourceResponse, Request, Result, Error, ComicId, SeriesInfo,
-        utils::{self, issue_id_match, resp_to_json, value_to_optstring, source_request, value_fn}
+        Source, SourceResponse, Result, Error, ComicId, SeriesInfo,
+        utils::{self, issue_id_match, resp_to_json, value_to_optstring, source_request}
     },
     comic::Page,
     metadata::Metadata,
@@ -25,7 +25,7 @@ impl Source for Flipp {
         )
     }
 
-    fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<Request<ComicId>> {
+    fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<SourceResponse<ComicId>> {
         if let ComicId::Other(eid) = otherid {
             let eid = eid.to_string();
             let url = format!(
@@ -33,9 +33,8 @@ impl Source for Flipp {
                 eid
             );
             source_request!(
-                // requests: HttpRequest::get(&url),
                 requests: client.get(url),
-                transform: move |resp| {
+                transform: |resp: &[bytes::Bytes]| {
                     let site = std::str::from_utf8(&resp[0]).ok()?;
                     let pubid_re = Regex::new("(?:publicationguid = \")([^\"]+)").unwrap();
                     let pubid = pubid_re.captures(site)?.get(1)?.as_str().to_string();
@@ -51,16 +50,16 @@ impl Source for Flipp {
     fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
         if let ComicId::Series(x) = comicid {
             let series_id = x.to_string();
-            Ok(SourceResponse::Request(source_request!(
+            source_request!(
                 requests: signin_data(client),
-                transform: move |resp| {
+                transform: |resp| {
                     let series_data = get_series_data(resp, &series_id)?;
-                    Some(SourceResponse::Value(SeriesInfo {
+                    Some(SeriesInfo {
                         name: series_data["name"].as_str()?.to_string(),
                         ..Default::default()
-                    }))
+                    })
                 }
-            ).unwrap()))
+            )
         } else { Err(Error::FailedResponseParse) }
     }
 
@@ -68,13 +67,13 @@ impl Source for Flipp {
         Ok(SourceResponse::Value(Metadata::default()))
     }
 
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>> {
         match seriesid {
             ComicId::Series(x) => {
                 let series_id = x.to_string();
                 source_request!(
                     requests: signin_data(client),
-                    transform: move |resp| {
+                    transform: |resp: &[bytes::Bytes]| {
                         let series_data = get_series_data(resp, &series_id)?;
                         // Extracting issue data
                         let series_name = &series_data["name"].as_str()?;
@@ -115,11 +114,11 @@ impl Source for Flipp {
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
         if let ComicId::Issue(url) | ComicId::IssueWithMetadata(url, _) = comicid {
-            Ok(SourceResponse::Request(source_request!(
+            source_request!(
                 requests: client.get(url),
                 // requests: HttpRequest::get(&url),
-                transform: value_fn(&response_to_pages)
-            ).unwrap()))
+                transform: response_to_pages
+            )
         } else { Err(Error::FailedDownload(self.name())) }
     }
 

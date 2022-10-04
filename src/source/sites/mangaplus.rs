@@ -5,8 +5,8 @@ use crate::{
     comic::Page,
     metadata::{Metadata, ReadingDirection},
     source::{
-        Source, ComicId, Result, Request, SourceResponse, SeriesInfo,
-        utils::{issue_id_match, source_request, first_capture_bin, simple_request, simple_response}
+        Source, ComicId, Result, SourceResponse, SeriesInfo,
+        utils::{issue_id_match, first_capture_bin, simple_response}
     }
 };
 
@@ -25,13 +25,13 @@ impl Source for MangaPlus {
         )
     }
 
-    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<Request<Vec<ComicId>>> {
-        simple_request!(
+    fn get_series_ids(&self, client: &Client, seriesid: &ComicId) -> Result<SourceResponse<Vec<ComicId>>> {
+        simple_response!(
             id: seriesid,
             client: client,
             id_type: Series,
             url: "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=40&secret=2afb69fbb05f57a1856cf75e1c4b6ee6",
-            transform: find_series_ids
+            value: find_series_ids
         )
     }
 
