@@ -56,7 +56,8 @@ impl Source for Flipp {
                 transform: move |resp| {
                     let series_data = get_series_data(resp, &series_id)?;
                     Some(SourceResponse::Value(SeriesInfo {
-                        name: series_data["name"].as_str()?.to_string()
+                        name: series_data["name"].as_str()?.to_string(),
+                        ..Default::default()
                     }))
                 }
             ).unwrap()))

@@ -170,7 +170,8 @@ fn parse_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
 fn parse_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
     let data = resp_to_json::<serde_json::Value>(&resp[0])?;
     Some(SeriesInfo {
-        name: data["title"].as_str()?.to_string()
+        name: data["title"].as_str()?.to_string(),
+        ..Default::default()
     })
 }
 

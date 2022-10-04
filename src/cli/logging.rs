@@ -7,7 +7,8 @@ pub fn setup_logger(level: LevelFilter) -> Result<(), fern::InitError> {
         .format(|out, message, record| {
             let (first, rest, color) = format_log_message(
                 message.to_string(),
-                record.level()
+                record.level(),
+                record.target()
             );
             out.finish(format_args!(
                 "{:>12} {}",
@@ -23,17 +24,18 @@ pub fn setup_logger(level: LevelFilter) -> Result<(), fern::InitError> {
 }
 
 
-fn format_log_message(msg: String, level: Level) -> (String, String, Color) {
+fn format_log_message(msg: String, level: Level, target: &str) -> (String, String, Color) {
     match level {
         Level::Error => ("ERROR".to_string(), msg, Color::Red),
         Level::Warn => ("WARNING".to_string(), msg, Color::Yellow),
-        Level::Debug => ("DEBUG".to_string(), msg, Color::Yellow),
+        Level::Debug => ("DEBUG".to_string(), format!("{} {}", msg, target.bright_black()), Color::Yellow),
+        Level::Trace => ("TRACE".to_string(), format!("{} {}", msg, target.bright_black()), Color::Cyan),
         _ => {
             let split = msg.find(" ").unwrap();
             let first_word = msg[..split].to_string();
             let rest = msg[split+1..].to_string();
             let color = match first_word.as_str() {
-                "Searching" | "Downloading" | "Loading" | "Retrieving" | "Skipping" => Color::Blue,
+                "Searching" | "Downloading" | "Loading" | "Retrieving" | "Skipping" | "Updating" => Color::Blue,
                 "Added" | "Completed" | "Found" | "Saved" => Color::Green,
                 _ => Color::BrightYellow,
             };

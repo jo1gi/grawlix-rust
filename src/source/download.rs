@@ -8,7 +8,7 @@ use reqwest::{
     Client,
     header::{HeaderMap, HeaderValue}
 };
-use log::debug;
+use log::{debug, trace};
 
 pub fn create_default_client() -> reqwest::Client {
     let mut headers = HeaderMap::new();
@@ -103,6 +103,7 @@ async fn eval_source_response<T>(response: SourceResponse<T>) -> Result<T> {
 
 async fn make_request<T>(request: Request<T>) -> Result<T> {
     let mut responses = Vec::new();
+    trace!("Making request");
     for request in request.requests {
         let bytes = request
             .send()
@@ -111,6 +112,7 @@ async fn make_request<T>(request: Request<T>) -> Result<T> {
             .await?;
         responses.push(bytes);
     }
+    trace!("Transforming response");
     (request.transform)(&responses).ok_or(Error::FailedResponseParse)
 }
 

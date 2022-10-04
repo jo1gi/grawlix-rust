@@ -85,6 +85,8 @@ pub struct Config {
     /// Update file
     #[serde(default = "default_update")]
     pub update_location: String,
+    #[serde(default = "Default::default")]
+    pub update_series_info: bool,
     /// DC Universe Infinite Config
     #[serde(default = "Default::default")]
     pub dcuniverseinfinite: Option<SourceData>,

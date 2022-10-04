@@ -140,6 +140,7 @@ impl OnlinePage {
         if let Some(headers) = &self.headers {
             req = req.headers(headers.try_into().unwrap());
         }
+        // TODO: Remove unwrap
         let resp = req.send().await.unwrap();
         let bytes = resp.bytes().await.unwrap().as_ref().into();
         match &self.encryption {

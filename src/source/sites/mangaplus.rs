@@ -1,10 +1,14 @@
 use regex::bytes::Regex;
+use reqwest::Client;
 
-use crate::{comic::Page, metadata::{Metadata, ReadingDirection}, source::{
+use crate::{
+    comic::Page,
+    metadata::{Metadata, ReadingDirection},
+    source::{
         Source, ComicId, Result, Request, SourceResponse, SeriesInfo,
         utils::{issue_id_match, source_request, first_capture_bin, simple_request, simple_response}
-    }};
-use reqwest::Client;
+    }
+};
 
 
 pub struct MangaPlus;
@@ -26,7 +30,7 @@ impl Source for MangaPlus {
             id: seriesid,
             client: client,
             id_type: Series,
-            url: "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=37&secret=243eb2b7776a8494c77c1de42bd45dfb",
+            url: "https://jumpg-api.tokyo-cdn.com/api/title_detailV2?title_id={}&lang=eng&os=android&os_ver=32&app_ver=40&secret=2afb69fbb05f57a1856cf75e1c4b6ee6",
             transform: find_series_ids
         )
     }
@@ -75,12 +79,12 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
 fn response_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
     let name_re = Regex::new(r#"(?s)\x12.(.+)\x1a"#).unwrap();
     Some(SeriesInfo {
-        name: first_capture_bin(&name_re, &resp[0])?
+        name: first_capture_bin(&name_re, &resp[0])?,
+        ..Default::default()
     })
 }
 
 fn response_to_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
-    // let title_re = Regex::new(r"\x17(.+)\x2a").unwrap();
     let title_re = Regex::new(r#"(?s)\x22.(.+)\x2a"#).unwrap();
     Some(Metadata {
         title: first_capture_bin(&title_re, &resp[0]),

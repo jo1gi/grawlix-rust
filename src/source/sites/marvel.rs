@@ -18,6 +18,8 @@ use reqwest::{
 
 pub struct Marvel;
 
+const API_KEY: &str = "83ac0da31d3f6801f2c73c7e07ad76e8";
+
 #[async_trait::async_trait]
 impl Source for Marvel {
     fn name(&self) -> String {
@@ -31,6 +33,18 @@ impl Source for Marvel {
             r"series/(\d+)" => Series
         )
     }
+
+    // fn create_client(&self) -> Client {
+    //     let mut headers = HeaderMap::new();
+    //     headers.insert(
+    //         "Referer",
+    //         HeaderValue::from_static("https://developer.marvel.com/")
+    //     );
+    //     Client::builder()
+    //         .default_headers(headers)
+    //         .build()
+    //         .unwrap()
+    // }
 
     fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<Request<ComicId>> {
         simple_request!(
@@ -53,13 +67,29 @@ impl Source for Marvel {
     }
 
     fn get_series_info(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<SeriesInfo>> {
-        simple_response!(
-            id: comicid,
-            client: client,
-            id_type: Series,
-            url: "https://api.marvel.com/browse/comics?byType=comic_series&isDigital=1&limit=10000&byId={}",
-            value: find_series_info
-        )
+        if let crate::source::ComicId::Series(seriesid) = comicid {
+            Ok(SourceResponse::Request(
+                crate::source::Request {
+                    requests: vec![
+                        client.get(format!(
+                            "https://gateway.marvel.com:443/v1/public/series/{}?apikey={}",
+                            seriesid, API_KEY)
+                        ).header("Referer", "https://developer.marvel.com/")
+                    ],
+                    transform: Box::new(|resp| {
+                        let value = find_series_info(resp)?;
+                        Some(SourceResponse::Value(value))
+                    })
+                }
+            ))
+        } else { unreachable!() }
+        // simple_response!(
+        //     id: comicid,
+        //     client: client,
+        //     id_type: Series,
+        //     url: "https://gateway.marvel.com:443/v1/public/series/{}?apikey=83ac0da31d3f6801f2c73c7e07ad76e8",
+        //     value: find_series_info
+        // )
     }
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
@@ -152,10 +182,13 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
     )
 }
 
-fn find_series_info(_resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
-    // TODO: Implement
+fn find_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
+    let results = get_results(&resp[0])?;
+    let title = results[0]["title"].as_str()?.to_string();
+    let ended = results[0]["endYear"].as_u64()? != 2099;
     Some(SeriesInfo {
-        name: "Unknown".to_string()
+        name: title,
+        ended,
     })
 }
 

@@ -100,7 +100,8 @@ fn response_series_info(responses: &[bytes::Bytes]) -> Option<SeriesInfo> {
         name: resp_to_json::<serde_json::Value>(&responses[0])?
             .get("name")?
             .as_str()?
-            .to_string()
+            .to_string(),
+        ..Default::default()
     })
 }
 

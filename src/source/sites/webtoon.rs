@@ -96,7 +96,8 @@ fn response_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
     let html = std::str::from_utf8(&resp[0]).ok()?;
     let doc = Html::parse_document(html);
     Some(SeriesInfo{
-        name: first_attr(&doc, r#"meta[property="og:title"]"#, "content")?
+        name: first_attr(&doc, r#"meta[property="og:title"]"#, "content")?,
+        ..Default::default()
     })
 }
 

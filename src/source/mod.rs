@@ -47,9 +47,12 @@ impl ComicId {
 }
 
 /// Info about comic series
+#[derive(Default)]
 pub struct SeriesInfo {
     /// Name of series
     pub name: String,
+    /// true if the series is ended false if not or unknown
+    pub ended: bool,
 }
 
 /// Response from source.
