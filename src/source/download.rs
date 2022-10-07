@@ -32,33 +32,47 @@ pub async fn download_comics_from_url(url: &str) -> Result<Vec<Comic>> {
     download_comics(all_ids, &client, &source).await
 }
 
+/// Downloads `Metadata` from comicid if `Issue` and extracts metadata if `IssueWithMetadata` and
+/// adds identifier for current source
+async fn metadata_from_comicid(client: &Client, source: &Box<dyn Source>, comicid: ComicId) -> Result<Metadata> {
+    let id_str = comicid.inner().clone(); // Needed later
+    // Extract or download metadata
+    let mut metadata = match comicid {
+        ComicId::Issue(_) => {
+            let metadata_response = source.get_metadata(&client, &comicid)?;
+            eval_source_response(metadata_response).await?
+        },
+        ComicId::IssueWithMetadata(_, meta) => meta,
+        _ => unreachable!()
+    };
+    // Add identifier for current source
+    metadata.identifiers.push(Identifier {
+        source: source.name(),
+        id: id_str
+    });
+    Ok(metadata)
+}
+
+/// Creates `Comic` from comicid
+async fn comic_from_comicid(client: &Client, source: &Box<dyn Source>, comicid: ComicId) -> Result<Comic> {
+    let pages_response = source.get_pages(&client, &comicid)?;
+    let pages = eval_source_response(pages_response).await?;
+    let metadata = metadata_from_comicid(client, source, comicid).await?;
+    Ok(Comic {
+        pages,
+        metadata,
+        ..Default::default()
+    })
+}
+
 /// Download all comics from ids
 pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &Box<dyn Source>) -> Result<Vec<Comic>> {
     stream::iter(comic_ids)
-        .map(|i| {
+        .map(|comicid| {
             let source = &source;
             let client = &client;
             async move {
-                let pages_response = source.get_pages(&client, &i)?;
-                let pages = eval_source_response( pages_response).await?;
-                let id_str = i.inner().clone();
-                let mut metadata = match i {
-                    ComicId::Issue(_) => {
-                        let metadata_response = source.get_metadata(&client, &i)?;
-                        eval_source_response(metadata_response).await?
-                    },
-                    ComicId::IssueWithMetadata(_, meta) => meta,
-                    _ => unreachable!()
-                };
-                metadata.identifiers.push(Identifier {
-                    source: source.name(),
-                    id: id_str
-                });
-                Ok(Comic {
-                    pages,
-                    metadata,
-                    ..Default::default()
-                })
+                comic_from_comicid(client, source, comicid).await
             }
         })
         .buffered(5)

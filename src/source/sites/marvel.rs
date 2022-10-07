@@ -2,7 +2,7 @@ use crate::{
     source::{
         Source, ComicId, Result, SourceResponse, SeriesInfo, Credentials,
         utils::{
-            issue_id_match, first_capture, value_to_optstring, resp_to_json, simple_response
+            first_capture, value_to_optstring, resp_to_json, simple_response, issue_id_match
         },
     },
     metadata::{self, Metadata, Author},
@@ -21,6 +21,7 @@ const API_KEY: &str = "83ac0da31d3f6801f2c73c7e07ad76e8";
 
 #[async_trait::async_trait]
 impl Source for Marvel {
+
     fn name(&self) -> String {
         "Marvel".to_string()
     }
@@ -32,18 +33,6 @@ impl Source for Marvel {
             r"series/(\d+)" => Series
         )
     }
-
-    // fn create_client(&self) -> Client {
-    //     let mut headers = HeaderMap::new();
-    //     headers.insert(
-    //         "Referer",
-    //         HeaderValue::from_static("https://developer.marvel.com/")
-    //     );
-    //     Client::builder()
-    //         .default_headers(headers)
-    //         .build()
-    //         .unwrap()
-    // }
 
     fn get_correct_id(&self, client: &Client, otherid: &ComicId) -> Result<SourceResponse<ComicId>> {
         simple_response!(
