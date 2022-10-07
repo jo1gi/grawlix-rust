@@ -6,11 +6,15 @@ use crate::{
 use grawlix::{
     error::GrawlixIOError,
     comic::Comic,
-    source::{Source, Credentials, source_from_url, get_all_ids, download_comics, source_from_name}
+    source::{
+        Source, Credentials, ComicId, source_from_url, get_all_ids, download_comics,
+        source_from_name, comic_from_comicid
+    }
 };
 use log::{info, debug, error};
 use std::{io::Write, process::exit, sync::{Arc, atomic::AtomicUsize}};
 use reqwest::Client;
+use futures::{StreamExt, stream};
 
 const PROGRESS_FILE: &str = ".grawlix-progress";
 
@@ -57,7 +61,7 @@ async fn download_comics_from_url(url: &str, config: &Config) -> Result<Vec<Comi
     let (source, client) = get_source_from_url(url, config).await?;
     let comicid = source.id_from_url(url)?;
     debug!("Got id from url: {:?}", comicid);
-    let all_ids = get_all_ids(&client, comicid, &source).await?;
+    let all_ids = get_all_ids(&source, &client, comicid).await?;
     let comics = download_comics(all_ids, &client, &source).await?;
     Ok(comics)
 }
@@ -160,6 +164,22 @@ fn setup_ctrlc(comics: Arc<Vec<Comic>>, progress: Arc<AtomicUsize>, config: &Con
     });
 }
 
+/// Download data about all comics and write them to disk
+pub async fn download_and_write_comics(source: &Box<dyn Source>, client: &Client, comicids: &Vec<ComicId>, config: &Config) {
+    stream::iter(comicids.clone())
+        .map(|comicid| comic_from_comicid(&source, &client, comicid))
+        .buffered(5)
+        .for_each(|comic| async {
+            match comic {
+                Ok(x) => write_comic(&x, config).await.unwrap(),
+                Err(e) => {
+                    info!("Failed to download comic info: {}", e);
+                },
+            }
+        })
+        .await;
+}
+
 /// Download comics and write them to disk
 /// Will create a file with unfinished progress if a ctrl-c signal is recieved while running
 pub async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
@@ -171,20 +191,25 @@ pub async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
     }
     // Download each comic
     for comic in comics.iter() {
-        // Creating output path
-        let path = comic.format(&config.output_template)?;
-        // Checking if file already exists if overwrite is not enabled
-        if !config.overwrite && std::path::Path::new(&path).exists() {
-            info!("Skipping {} (File already exists)", comic.title());
-        // Downloading comic
-        } else {
-            info!("Downloading {}", comic.title());
-            if config.info {
-                logging::print_comic(comic, config.json);
-            }
-            comic.write(&path, &config.output_format).await?;
-        }
+        write_comic(comic, config).await?;
         progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+    Ok(())
+}
+
+pub async fn write_comic(comic: &Comic, config: &Config) -> Result<()> {
+    // Creating output path
+    let path = comic.format(&config.output_template)?;
+    // Checking if file already exists if overwrite is not enabled
+    if !config.overwrite && std::path::Path::new(&path).exists() {
+        info!("Skipping {} (File already exists)", comic.title());
+        // Downloading comic
+    } else {
+        info!("Downloading {}", comic.title());
+        if config.info {
+            logging::print_comic(comic, config.json);
+        }
+        comic.write(&path, &config.output_format).await?;
     }
     Ok(())
 }

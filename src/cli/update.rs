@@ -1,10 +1,10 @@
 use crate::{
     CliError,
-    utils::{self, get_all_links, write_comics, get_source_from_name},
+    utils::{self, get_all_links, get_source_from_name},
     options::{Arguments, Config}
 };
 use grawlix::source::{
-    Source, ComicId, download_comics, get_all_ids, download_series_metadata
+    Source, ComicId, get_all_ids, download_series_metadata
 };
 use thiserror::Error;
 use displaydoc::Display;
@@ -110,28 +110,32 @@ async fn update_series_info(mut update_data: Vec<UpdateSeries>, config: &Config)
     Ok(update_data)
 }
 
+// Returns a list of new ids in current series
+async fn find_new_ids(source: &Box<dyn Source>, client: &Client, series: &UpdateSeries) -> Result<Vec<ComicId>, CliError> {
+    let seriesid = ComicId::Series(series.id.to_string());
+    Ok(get_all_ids(source, client, seriesid).await?
+        .into_iter()
+        .filter(|x| !series.downloaded_issues.contains(x.inner()))
+        .collect())
+}
+
 /// Downloads new comics for all series in `update_data`
 async fn download_new_comics(update_data: &mut Vec<UpdateSeries>, config: &Config) -> Result<(), CliError> {
     for series in update_data {
         info!("Searching for updates in {}", series.name);
         let (source, client) = get_source_from_name(&series.source, config).await?;
         // Finding new ids
-        let ids: Vec<ComicId> = get_all_ids(&client, ComicId::Series(series.id.clone()), &source).await?
-            .into_iter()
-            .filter(|x| !series.downloaded_issues.contains(x.inner()))
-            .collect();
+        let comicids = find_new_ids(&source, &client, series).await?;
         // Downloading new comics
-        if ids.len() == 0 {
+        if comicids.len() == 0 {
             continue
         }
-        info!("Retrieving data for {} comics from {}", ids.len(), series.name);
-        let comics = download_comics(ids.clone(), &client, &source).await?;
-        write_comics(comics, config).await?;
+        info!("Retrieving data for {} comics from {}", comicids.len(), series.name);
+        utils::download_and_write_comics(&source, &client, &comicids, config).await;
         // Adding new ids to update file
-        let mut string_ids = ids.iter()
-            .map(|x| x.inner().clone())
-            .collect();
-        series.downloaded_issues.append(&mut string_ids);
+        for id in comicids {
+            series.downloaded_issues.push(id.inner().to_string());
+        }
     }
     Ok(())
 }

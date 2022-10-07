@@ -5,10 +5,7 @@ mod utils;
 /// Implementations of `Source` for different sites
 mod sites;
 
-pub use download::{
-    download_comics_from_url, download_comics, download_comics_metadata, create_default_client,
-    get_all_ids, download_series_metadata
-};
+pub use download::*;
 
 pub use sites::{source_from_name, source_from_url};
 

@@ -10,6 +10,7 @@ use reqwest::{
 };
 use log::{debug, trace};
 
+/// Create new default `reqwest::Client` to use in `Source`
 pub fn create_default_client() -> reqwest::Client {
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -28,13 +29,13 @@ pub async fn download_comics_from_url(url: &str) -> Result<Vec<Comic>> {
     let mut client = source.create_client();
     let comicid = source.id_from_url(url)?;
     debug!("Got id from url: {:?}", comicid);
-    let all_ids = get_all_ids(&mut client, comicid, &source).await?;
+    let all_ids = get_all_ids(&source, &mut client, comicid).await?;
     download_comics(all_ids, &client, &source).await
 }
 
 /// Downloads `Metadata` from comicid if `Issue` and extracts metadata if `IssueWithMetadata` and
 /// adds identifier for current source
-async fn metadata_from_comicid(client: &Client, source: &Box<dyn Source>, comicid: ComicId) -> Result<Metadata> {
+async fn metadata_from_comicid(source: &Box<dyn Source>, client: &Client, comicid: ComicId) -> Result<Metadata> {
     let id_str = comicid.inner().clone(); // Needed later
     // Extract or download metadata
     let mut metadata = match comicid {
@@ -54,10 +55,10 @@ async fn metadata_from_comicid(client: &Client, source: &Box<dyn Source>, comici
 }
 
 /// Creates `Comic` from comicid
-async fn comic_from_comicid(client: &Client, source: &Box<dyn Source>, comicid: ComicId) -> Result<Comic> {
+pub async fn comic_from_comicid(source: &Box<dyn Source>, client: &Client, comicid: ComicId) -> Result<Comic> {
     let pages_response = source.get_pages(&client, &comicid)?;
     let pages = eval_source_response(pages_response).await?;
-    let metadata = metadata_from_comicid(client, source, comicid).await?;
+    let metadata = metadata_from_comicid(source, client, comicid).await?;
     Ok(Comic {
         pages,
         metadata,
@@ -72,7 +73,7 @@ pub async fn download_comics(comic_ids: Vec<ComicId>, client: &Client, source: &
             let source = &source;
             let client = &client;
             async move {
-                comic_from_comicid(client, source, comicid).await
+                comic_from_comicid(source, client, comicid).await
             }
         })
         .buffered(5)
@@ -93,7 +94,7 @@ pub async fn download_comics_metadata(
 ) -> Result<Vec<Metadata>> {
     let mut client = source.create_client();
     let comicid = source.id_from_url(url)?;
-    let all_ids = get_all_ids(&mut client, comicid, &source).await?;
+    let all_ids = get_all_ids(&source, &mut client, comicid).await?;
     let mut metadata = Vec::new();
     for i in all_ids {
         let response = source.get_metadata(&client, &i)?;
@@ -132,18 +133,18 @@ async fn make_request<T>(request: Request<T>) -> Result<T> {
 
 #[async_recursion(?Send)]
 pub async fn get_all_ids(
+    source: &Box<dyn Source>,
     client: &Client,
-    comicid: ComicId,
-    source: &Box<dyn Source>
+    comicid: ComicId
 ) -> Result<Vec<ComicId>> {
     Ok(match comicid {
         ComicId::Other(_) => {
             let new_id_request = source.get_correct_id(client, &comicid)?;
             let new_id = eval_source_response(new_id_request).await?;
-            get_all_ids(client, new_id, source).await?
+            get_all_ids(source, client, new_id).await?
         },
         ComicId::OtherWithMetadata(id, meta) => {
-            let new_ids = get_all_ids(client, ComicId::Other(id), source).await?;
+            let new_ids = get_all_ids(source, client, ComicId::Other(id)).await?;
             match &new_ids[..] {
                 [ComicId::Issue(x)] => vec![ComicId::IssueWithMetadata(x.to_string(), meta)],
                 _ => new_ids,
@@ -155,7 +156,7 @@ pub async fn get_all_ids(
             // let mut result = Vec::new();
             let evaluated_ids = stream::iter(new_ids)
                 .map(|new_id| async move {
-                    get_all_ids(client, new_id, source).await
+                    get_all_ids(source, client, new_id).await
                 })
                 .buffered(5)
                 .collect::<Vec<Result<Vec<ComicId>>>>().await;

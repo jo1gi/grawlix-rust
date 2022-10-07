@@ -62,6 +62,7 @@ async fn run() -> Result<()> {
 
 /// Download comics
 async fn download(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
+    // TODO: Use download_and_write_comics function instead
     let comics = utils::get_comics(args, config, inputs).await?;
     info!("Found {} {}", comics.len(), if comics.len() > 1 { "comics" } else { "comic" });
     if comics.len() > 0 {
