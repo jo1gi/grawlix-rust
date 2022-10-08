@@ -46,6 +46,7 @@ fn load_updatefile(path: &str) -> Result<Vec<UpdateSeries>, UpdateError> {
     }
 }
 
+/// Write `update_data` to disk
 fn write_updatefile(update_data: &Vec<UpdateSeries>, path: &str) {
     let mut file = std::fs::File::create(path).unwrap();
     match file.write_all(serde_json::to_string(&update_data).unwrap().as_bytes()) {

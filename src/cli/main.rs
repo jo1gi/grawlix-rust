@@ -74,6 +74,7 @@ async fn download(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Re
 /// Print comics to stdout
 async fn info(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
     let comics = utils::get_comics(args, config, inputs).await?;
+    log::debug!("Found {} comics", comics.len());
     if config.json {
         println!("{}", serde_json::to_string_pretty(&comics).unwrap());
     } else {

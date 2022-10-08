@@ -15,8 +15,10 @@ use reqwest::{
     header::{HeaderValue, HeaderMap}
 };
 
+/// Source for marvel.com
 pub struct Marvel;
 
+/// Personal Api key for public Marvel api
 const API_KEY: &str = "83ac0da31d3f6801f2c73c7e07ad76e8";
 
 #[async_trait::async_trait]
@@ -155,7 +157,6 @@ impl Source for Marvel {
 fn find_correct_id(resp: &[bytes::Bytes]) -> Option<ComicId> {
     let data = std::str::from_utf8(&resp[0]).ok()?;
     let re = Regex::new(r#"digital_comic_id: "(\d+)""#).unwrap();
-    // let re = Regex::new(r#"data-digitalid="(\d+)"#).unwrap();
     Some(ComicId::Issue(first_capture(&re, data)?))
 }
 
@@ -173,7 +174,7 @@ fn find_series_ids(resp: &[bytes::Bytes]) -> Option<Vec<ComicId>> {
 fn find_series_info(resp: &[bytes::Bytes]) -> Option<SeriesInfo> {
     let results = get_results(&resp[0])?;
     let title = results[0]["title"].as_str()?.to_string();
-    let ended = results[0]["endYear"].as_u64()? != 2099;
+    let ended = results[0]["endYear"].as_u64()? != 2099; // endYear is 2099 if not finished
     Some(SeriesInfo {
         name: title,
         ended,
