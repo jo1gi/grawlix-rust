@@ -1,5 +1,6 @@
 mod dcuniverseinfinite;
 mod flipp;
+mod izneo;
 mod leagueoflegends;
 mod mangaplus;
 mod marvel;
@@ -34,6 +35,7 @@ pub fn source_from_url(url: &str) -> Result<Box<dyn Source>> {
     match_re!(url,
         "dcuniverseinfinite.com" => dcuniverseinfinite::DCUniverseInfinite::default(),
         "flipp.dk" => flipp::Flipp,
+        "izneo.com" => izneo::Izneo,
         "universe.leagueoflegends.com" => leagueoflegends::LeagueOfLegends,
         "mangaplus.shueisha.co.jp" => mangaplus::MangaPlus,
         "marvel.com" => marvel::Marvel,
@@ -48,6 +50,7 @@ pub fn source_from_name(name: &str) -> Result<Box<dyn Source>> {
     Ok(match lower.as_str() {
         "dc" | "dcuniverseinfinite" => Box::new(dcuniverseinfinite::DCUniverseInfinite::default()),
         "flipp" => Box::new(flipp::Flipp),
+        "izneo" => Box::new(izneo::Izneo),
         "league of legends" => Box::new(leagueoflegends::LeagueOfLegends),
         "manga plus" => Box::new(mangaplus::MangaPlus),
         "marvel" => Box::new(marvel::Marvel),

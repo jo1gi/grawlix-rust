@@ -57,3 +57,4 @@ ctrlc = "3"
 scraper = "0.13"
 # For decrypting data
 rust-crypto = "0.2.36"
+base64 = "0.13"

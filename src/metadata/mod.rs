@@ -3,7 +3,7 @@ mod comicrack;
 mod tests;
 
 use crate::error::GrawlixIOError as Error;
-use std::{fmt, io::Read};
+use std::{fmt, io::Read, str::FromStr};
 use serde::{Deserialize, Serialize};
 
 /// Stores metadata about a comic book
@@ -142,6 +142,28 @@ pub enum ReadingDirection {
 impl Default for ReadingDirection {
     fn default() -> Self {
         ReadingDirection::LeftToRight
+    }
+}
+
+impl FromStr for ReadingDirection {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let lower = s.to_ascii_lowercase();
+        let direction = match lower.as_str() {
+            "ltr" => Self::LeftToRight,
+            "rtl" => Self::RightToLeft,
+            _ => return Err(()),
+        };
+        Ok(direction)
+    }
+}
+
+impl TryFrom<&str> for ReadingDirection {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::from_str(value)
     }
 }
 

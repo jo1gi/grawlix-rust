@@ -160,3 +160,13 @@ pub fn value_fn<T>(f: &'static dyn Fn(&[bytes::Bytes]) -> Option<T>) -> Box<dyn 
         Some(SourceResponse::Value(value))
     })
 }
+
+/// Find all links in `resp` matching `selector_str`
+pub fn find_links(selector_str: &str, resp: &bytes::Bytes) -> Option<Vec<String>> {
+    let html = std::str::from_utf8(resp).ok()?;
+    let doc = scraper::Html::parse_document(html);
+    let selector = scraper::Selector::parse(selector_str).ok()?;
+    doc.select(&selector)
+        .map(|a| a.value().attr("href").map(String::from))
+        .collect()
+}

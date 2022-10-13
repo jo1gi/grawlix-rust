@@ -5,7 +5,7 @@ use crate::{
     source::{
         ComicId, Error, Result, Source, SourceResponse, SeriesInfo,
         utils::{
-            first_text, first_attr, issue_id_match, simple_response, source_request, ANDROID_USER_AGENT
+            self, first_text, first_attr, issue_id_match, simple_response, source_request, ANDROID_USER_AGENT
         }
     }};
 use reqwest::{Client, header};
@@ -45,14 +45,9 @@ impl Source for Webtoon {
                     client.get(format!("https://m.webtoons.com/en/{}", x))
                         .header("User-Agent", ANDROID_USER_AGENT),
                 transform: |resp: &[bytes::Bytes]| {
-                    let html = std::str::from_utf8(&resp[0]).ok()?;
-                    let doc = Html::parse_document(html);
-                    let issues = doc.select(&Selector::parse("ul#_episodeList").unwrap()).next()?;
-                    issues.select(&Selector::parse("li a").unwrap())
-                        .map(|issue| {
-                            let link = issue.value().attr("href")?;
-                            id_from_url(link).ok()
-                        })
+                    utils::find_links("ul#_episodeList li a", &resp[0])?
+                        .iter()
+                        .map(|link| id_from_url(link).ok())
                         .collect::<Option<Vec<ComicId>>>()
                 }
             )

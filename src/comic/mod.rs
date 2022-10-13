@@ -10,7 +10,6 @@ use crypto::{
     blockmodes::NoPadding,
     buffer::{RefReadBuffer, RefWriteBuffer, WriteBuffer, ReadBuffer},
 };
-use log::debug;
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Comic {
@@ -88,9 +87,15 @@ pub struct OnlinePage {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum PageEncryptionScheme {
-    XOR(Vec<u8>),
+    /// AES encryption
+    AES {
+        key: Vec<u8>,
+        iv: Vec<u8>,
+    },
     /// Encryption scheme used by DC Universe Infinite
     DCUniverseInfinite([u8; 32]),
+    /// XOR encryption
+    XOR(Vec<u8>),
 }
 
 impl Page {
@@ -136,6 +141,7 @@ impl Page {
 
 impl OnlinePage {
     pub async fn download_page(&self, client: &reqwest::Client) -> Vec<u8> {
+        log::trace!("Downloading page: {}", self.url);
         let mut req = client.get(&self.url);
         if let Some(headers) = &self.headers {
             req = req.headers(headers.try_into().unwrap());
@@ -151,8 +157,21 @@ impl OnlinePage {
 }
 
 fn decrypt_page(bytes: Vec<u8>, enc: &PageEncryptionScheme) -> Vec<u8> {
-    debug!("Decrypting page");
+    log::trace!("Decrypting page");
     match enc {
+        PageEncryptionScheme::AES { key, iv } => {
+            let mut image_buffer = RefReadBuffer::new(&bytes);
+            let size = bytes.len();
+            let mut decrypted_vector = vec![0; size];
+            let mut decrypted_buffer = RefWriteBuffer::new(&mut decrypted_vector);
+            let mut aescbc = cbc_decryptor(KeySize::KeySize128, key, iv, NoPadding);
+            aescbc.decrypt(&mut image_buffer, &mut decrypted_buffer, true)
+                // TODO: Handle correct
+                .expect("Could not decrypt image from DC Universe Infinite");
+            // Gets image data
+            let mut image = decrypted_buffer.take_read_buffer();
+            image.take_remaining().to_vec()
+        },
         PageEncryptionScheme::XOR(key) => {
             bytes.iter()
                 .zip(key.iter().cycle())

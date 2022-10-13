@@ -57,7 +57,9 @@ async fn metadata_from_comicid(source: &Box<dyn Source>, client: &Client, comici
 /// Creates `Comic` from comicid
 pub async fn comic_from_comicid(source: &Box<dyn Source>, client: &Client, comicid: ComicId) -> Result<Comic> {
     let pages_response = source.get_pages(&client, &comicid)?;
+    log::trace!("Retrieving pages");
     let pages = eval_source_response(pages_response).await?;
+    log::trace!("Retrieving metadata");
     let metadata = metadata_from_comicid(source, client, comicid).await?;
     Ok(Comic {
         pages,
