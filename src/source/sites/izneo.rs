@@ -66,7 +66,7 @@ impl Source for Izneo {
 fn id_from_url(url: &str) -> Result<ComicId> {
     issue_id_match!(url,
         r"\w+/[^/]+/[^/]+/[^/]+/.+-(\d+)/read" => Issue,
-        r"\w+/[^/]+/[^/]+/.+-(\d+)$" => Series
+        r".+-(\d+)$" => Series
     )
 }
 
@@ -95,12 +95,11 @@ fn get_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
     let data = &root["data"];
     let book = data["id"].as_str()?;
     let state = data["state"].as_str()?;
-    let preview = if state == "preview" { "?type=preview" } else { "" };
+    let image_type = if state == "preview" { "preview" } else { "full" };
     let pages = data["pages"]
         .as_array()?
         .iter()
         .filter_map(|x| {
-            log::trace!("Page");
             let f = |v| {
                 let string_value = value_to_optstring(v)?;
                 base64::decode(&string_value).ok()
@@ -109,10 +108,10 @@ fn get_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
                 file_format: "jpg".to_string(),
                 page_type: PageType::Url(OnlinePage {
                     url: format!(
-                        "https://www.izneo.com/book/{book}/{page}{preview}",
+                        "https://www.izneo.com/book/{book}/{page}?type={image_type}",
                         book = book,
                         page = &x["albumPageNumber"].as_u64()?,
-                        preview = preview
+                        image_type = image_type
                     ),
                     headers: None,
                     encryption: Some(PageEncryptionScheme::AES {
@@ -129,19 +128,19 @@ fn get_pages(resp: &[bytes::Bytes]) -> Option<Vec<Page>> {
 fn parse_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
     let root: serde_json::Value = utils::resp_to_json(&resp[0])?;
     let data = &root["data"];
-    let info = &data["endingPageRules"]["ctaAlbum"];
+    // let info = &data["endingPageRules"]["ctaAlbum"];
     Some(Metadata {
-        title: value_to_optstring(&info["title"]),
-        series: value_to_optstring(&info["serie_name"]),
+        title: value_to_optstring(&data["subtitle"]),
+        series: value_to_optstring(&data["title"]),
         reading_direction: data["readDirection"].as_str()?.try_into().ok()?,
-        authors: info["authors"]
-            .as_array()?
-            .iter()
-            .filter_map(|author| Some(Author {
-                name: author["nickname"].as_str()?.to_string(),
-                author_type: crate::metadata::AuthorType::Other,
-            }))
-            .collect(),
+        // authors: info["authors"]
+        //     .as_array()?
+        //     .iter()
+        //     .filter_map(|author| Some(Author {
+        //         name: author["nickname"].as_str()?.to_string(),
+        //         author_type: crate::metadata::AuthorType::Other,
+        //     }))
+        //     .collect(),
         ..Default::default()
     })
 }
@@ -192,10 +191,10 @@ mod tests {
                 title: Some("Jim Butcher's The Dresden Files: Down Town".to_string()),
                 series: Some("Jim Butcher's The Dresden Files".to_string()),
                 reading_direction: ReadingDirection::LeftToRight,
-                authors: vec![
-                    Author { name: "Jim Butcher".to_string(), author_type: AuthorType::Other },
-                    Author { name: "Mark Powers".to_string(), author_type: AuthorType::Other },
-                ],
+                // authors: vec![
+                //     Author { name: "Jim Butcher".to_string(), author_type: AuthorType::Other },
+                //     Author { name: "Mark Powers".to_string(), author_type: AuthorType::Other },
+                // ],
                 ..Default::default()
             }
         )

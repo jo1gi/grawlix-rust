@@ -1,26 +1,16 @@
-use super::{ComicId, Source, Request, SourceResponse, Result, Error, SeriesInfo};
+use super::{ComicId, Source, Request, SourceResponse, Result, Error, SeriesInfo, ClientBuilder};
 use crate::{
     comic::Comic, metadata::{Metadata, Identifier}
 };
 use async_recursion::async_recursion;
 use futures::{StreamExt, TryStreamExt, stream};
-use reqwest::{
-    Client,
-    header::{HeaderMap, HeaderValue}
-};
+use reqwest::Client;
 use log::{debug, trace};
 
 /// Create new default `reqwest::Client` to use in `Source`
-pub fn create_default_client() -> reqwest::Client {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        "User-Agent",
-        HeaderValue::from_static("grawlix")
-    );
-    Client::builder()
-        .default_headers(headers)
-        .build()
-        .unwrap()
+pub fn create_default_client() -> ClientBuilder {
+    ClientBuilder::default()
+        .header("User-Agent", "grawlix")
 }
 
 /// Download all comics from url

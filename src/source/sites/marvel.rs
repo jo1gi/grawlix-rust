@@ -1,6 +1,6 @@
 use crate::{
     source::{
-        Source, ComicId, Result, SourceResponse, SeriesInfo, Credentials,
+        Source, ComicId, Result, SourceResponse, SeriesInfo,
         utils::{
             first_capture, value_to_optstring, resp_to_json, simple_response, issue_id_match
         },
@@ -10,10 +10,7 @@ use crate::{
 };
 
 use regex::Regex;
-use reqwest::{
-    Client,
-    header::{HeaderValue, HeaderMap}
-};
+use reqwest::Client;
 
 /// Source for marvel.com
 pub struct Marvel;
@@ -73,13 +70,6 @@ impl Source for Marvel {
                 }
             ))
         } else { unreachable!() }
-        // simple_response!(
-        //     id: comicid,
-        //     client: client,
-        //     id_type: Series,
-        //     url: "https://gateway.marvel.com:443/v1/public/series/{}?apikey=83ac0da31d3f6801f2c73c7e07ad76e8",
-        //     value: find_series_info
-        // )
     }
 
     fn get_pages(&self, client: &Client, comicid: &ComicId) -> Result<SourceResponse<Vec<Page>>> {
@@ -102,56 +92,6 @@ impl Source for Marvel {
         )
     }
 
-    async fn authenticate(&mut self, client: &mut Client, creds: &Credentials) -> Result<()> {
-        // if let Credentials::UsernamePassword(username, password) = creds {
-        //     let mut headers = HeaderMap::new();
-        //     headers.insert("User-Agent", HeaderValue::from_static("aXMLRPC"));
-        //     headers.insert("Content-Type", HeaderValue::from_static("text/html; charset=utf-8"));
-        //     let response = client.post("https://api.marvel.com/xmlrpc/login_api_https.php")
-        //         .headers(headers)
-        //         .body(format!(
-        //             r#"
-        //             <?xml version="1.0" encoding="UTF-8"?>
-        //             <methodCall>
-        //                 <methodName>login</methodName>
-        //                 <params>
-        //                     <param><value><string>{username}</string></value></param>
-        //                     <param><value><string>{password}</string></value></param>
-        //                 </params>
-        //             </methodCall>
-        //            "#,
-        //             username=username,
-        //             password=password
-        //         ))
-        //         .send()
-        //         .await?;
-        //     // TODO: Find better way to add cookies
-        //     // TODO: Check valid login
-        //     let mut headers = HeaderMap::new();
-        //     headers.insert(
-        //         reqwest::header::COOKIE,
-        //         HeaderValue::from_str("PHPSESSID=1cltieehipbco7s08hcnhf14dp").unwrap()
-        //     );
-        //     *client = Client::builder()
-        //         .default_headers(headers)
-        //         .build()
-        //         .unwrap();
-        //     Ok(())
-        if let Credentials::ApiKey(apikey) = creds {
-            let mut headers = HeaderMap::new();
-            headers.insert(
-                reqwest::header::COOKIE,
-                HeaderValue::from_str(&format!("PHPSESSID={}", apikey)).unwrap()
-            );
-            *client = Client::builder()
-                .default_headers(headers)
-                .build()
-                .unwrap();
-            Ok(())
-        } else {
-            unreachable!()
-        }
-    }
 }
 
 fn find_correct_id(resp: &[bytes::Bytes]) -> Option<ComicId> {
@@ -197,7 +137,7 @@ fn parse_metadata(responses: &[bytes::Bytes]) -> Option<Metadata> {
     let results = get_results(&responses[0])?;
     let issue_meta = &results[0]["issue_meta"];
     let date = metadata::date_from_str(&issue_meta["release_date"].as_str()?)?;
-    Some(Metadata{
+    Some(Metadata {
         title: value_to_optstring(&issue_meta["title"]),
         series: value_to_optstring(&issue_meta["series_title"]),
         publisher: Some("Marvel".to_string()),

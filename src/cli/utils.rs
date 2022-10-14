@@ -7,7 +7,8 @@ use grawlix::{
     error::GrawlixIOError,
     comic::Comic,
     source::{
-        Source, Credentials, ComicId, source_from_url, get_all_ids, download_comics,
+        self,
+        Source, ComicId, source_from_url, get_all_ids, download_comics,
         source_from_name, comic_from_comicid
     }
 };
@@ -22,39 +23,56 @@ const PROGRESS_FILE: &str = ".grawlix-progress";
 fn get_source_settings(source: &Box<dyn Source>, config: &Config) -> Option<SourceData> {
     match source.name().as_str() {
         "DC Universe Infinite" => config.dcuniverseinfinite.clone(),
+        "Izneo" => config.izneo.clone(),
         "Marvel" => config.marvel.clone(),
         _ => None
+    }
+}
+
+fn load_cookies(source: &Box<dyn Source>, clientbuilder: &mut source::ClientBuilder, config: &Config) {
+    debug!("Adding cookies to clientbuilder");
+    if let Some(sourcedata) = get_source_settings(&source, config) {
+        if let Some(cookies) = sourcedata.cookies {
+            for (key, value) in cookies {
+                clientbuilder.add_cookie(key, value);
+            }
+        }
     }
 }
 
 /// Authenticate `source` with credentials from `config`
 pub async fn authenticate_source(source: &mut Box<dyn Source>, client: &mut Client, config: &Config) -> Result<()> {
     if let Some(sourcedata) = get_source_settings(&source, config) {
-        // TODO: Don't crash when missing credentials
-        let credentials: Credentials = sourcedata.try_into()?;
-        debug!("Authenticating source");
-        source.authenticate(client, &credentials).await?;
+        if let Ok(credentials) = sourcedata.try_into() {
+            debug!("Authenticating source");
+            source.authenticate(client, &credentials).await?;
+        }
     }
     Ok(())
 }
 
-/// Create source from url and authenticate if credentials are available
-pub async fn get_source_from_url(url: &str, config: &Config) -> Result<(Box<dyn Source>, Client)> {
-    let mut source = source_from_url(url)?;
-    let mut client = source.create_client();
-    if source.pages_require_authentication() || source.metadata_require_authentication() {
+/// Create source from dynamic method
+async fn get_source<F>(method: &F, param: &str, config: &Config) -> Result<(Box<dyn Source>, Client)>
+where
+    F: Fn(&str) -> std::result::Result<Box<dyn Source>, grawlix::error::GrawlixDownloadError>,
+{
+    let mut source = method(param)?;
+    let mut clientbuilder = source.client_builder();
+    load_cookies(&source, &mut clientbuilder, config);
+    let mut client = clientbuilder.to_reqwest_client();
+    if source.requires_authentication() {
         authenticate_source(&mut source, &mut client, config).await?;
     }
     Ok((source, client))
 }
 
+/// Create source from url and authenticate if credentials are available
+pub async fn get_source_from_url(url: &str, config: &Config) -> Result<(Box<dyn Source>, Client)> {
+    get_source(&source_from_url, url, config).await
+}
+
 pub async fn get_source_from_name(name: &str, config: &Config) -> Result<(Box<dyn Source>, Client)> {
-    let mut source = source_from_name(name)?;
-    let mut client = source.create_client();
-    if source.pages_require_authentication() || source.metadata_require_authentication() {
-        authenticate_source(&mut source, &mut client, config).await?;
-    }
-    Ok((source, client))
+    get_source(&source_from_name, name, config).await
 }
 
 async fn download_comics_from_url(url: &str, config: &Config) -> Result<Vec<Comic>> {
@@ -99,7 +117,7 @@ fn load_links_from_file(link_file: &std::path::PathBuf) -> Result<Vec<String>> {
 }
 
 /// Return all links from arguments, files, and pipe
-pub fn get_all_links(args: &Arguments, inputs: &Vec<String>) -> Result<Vec<String>> {
+pub fn get_all_links(inputs: &Vec<String>, args: &Arguments) -> Result<Vec<String>> {
     let mut x = inputs.clone();
     if let Some(link_file) = &args.file {
         x.append(&mut load_links_from_file(link_file)?);
@@ -124,7 +142,7 @@ pub async fn get_comics(args: &Arguments, config: &Config, inputs: &Vec<String>)
         }
         Ok(comics)
     } else {
-        let links = get_all_links(args, inputs)?;
+        let links = get_all_links(inputs, args)?;
         if links.len() > 0 {
             info!("Searching for comics");
             Ok(load_inputs(&links, config).await?)
@@ -171,7 +189,7 @@ pub async fn download_and_write_comics(source: &Box<dyn Source>, client: &Client
         .buffered(5)
         .for_each(|comic| async {
             match comic {
-                Ok(x) => write_comic(&x, config).await.unwrap(),
+                Ok(x) => write_comic(&x, client, config).await.unwrap(),
                 Err(e) => {
                     info!("Failed to download comic info: {}", e);
                 },
@@ -182,7 +200,7 @@ pub async fn download_and_write_comics(source: &Box<dyn Source>, client: &Client
 
 /// Download comics and write them to disk
 /// Will create a file with unfinished progress if a ctrl-c signal is recieved while running
-pub async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
+pub async fn write_comics(comics: Vec<Comic>, client: &Client, config: &Config) -> Result<()> {
     // Save progress on ctrl-c
     let comics = std::sync::Arc::new(comics);
     let progress = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
@@ -191,13 +209,13 @@ pub async fn write_comics(comics: Vec<Comic>, config: &Config) -> Result<()> {
     }
     // Download each comic
     for comic in comics.iter() {
-        write_comic(comic, config).await?;
+        write_comic(comic, client, config).await?;
         progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
     Ok(())
 }
 
-pub async fn write_comic(comic: &Comic, config: &Config) -> Result<()> {
+pub async fn write_comic(comic: &Comic, client: &Client, config: &Config) -> Result<()> {
     // Creating output path
     let path = comic.format(&config.output_template)?;
     // Checking if file already exists if overwrite is not enabled
@@ -209,7 +227,7 @@ pub async fn write_comic(comic: &Comic, config: &Config) -> Result<()> {
         if config.info {
             logging::print_comic(comic, config.json);
         }
-        comic.write(&path, &config.output_format).await?;
+        comic.write(&path, &config.output_format, client).await?;
     }
     Ok(())
 }

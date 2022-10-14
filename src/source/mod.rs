@@ -1,3 +1,4 @@
+mod clientbuilder;
 /// Functions for downloading comics
 mod download;
 /// Utility functions and macros for implementing `Source`
@@ -5,8 +6,8 @@ mod utils;
 /// Implementations of `Source` for different sites
 mod sites;
 
+pub use clientbuilder::*;
 pub use download::*;
-
 pub use sites::{source_from_name, source_from_url};
 
 use crate::{
@@ -83,9 +84,15 @@ pub trait Source: Send {
     /// Name of source
     fn name(&self) -> String;
 
+    /// Builder for `reqwest::Client`
+    fn client_builder(&self) -> ClientBuilder {
+        download::create_default_client()
+    }
+
     /// Create `reqwest::Client` to use for all requests generated from source
     fn create_client(&self) -> reqwest::Client {
-        download::create_default_client()
+        self.client_builder()
+            .to_reqwest_client()
     }
 
     /// Converts an url to `ComicId`
@@ -125,6 +132,11 @@ pub trait Source: Send {
     /// Returns `true` if authentication is needed to download pages
     fn pages_require_authentication(&self) -> bool {
         true
+    }
+
+    /// Checks if `Source` needs authentication
+    fn requires_authentication(&self) -> bool {
+        self.metadata_require_authentication() || self.pages_require_authentication()
     }
 
     /// Authenticate with source using `creds`

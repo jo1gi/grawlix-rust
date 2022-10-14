@@ -5,7 +5,6 @@ mod utils;
 
 
 use log::{info, error};
-use logging::setup_logger;
 use options::{Arguments, Command, Config};
 use structopt::StructOpt;
 use thiserror::Error;
@@ -30,6 +29,8 @@ pub enum CliError {
     MissingCredentials(String),
     /// {0}
     LogError(#[from] fern::InitError),
+    /// Failed to read config file: {0}
+    InvalidConfigFile(#[from] toml::de::Error),
     /// Unknown error occurred
     Unknown,
 }
@@ -48,11 +49,11 @@ async fn main() {
 async fn run() -> Result<()> {
     // Loading options
     let args = Arguments::from_args();
-    let config: Config = options::load_options(&args).unwrap();
-    setup_logger(args.log_level)?;
+    logging::setup_logger(args.log_level)?;
+    let config: Config = options::load_options(&args)?;
     match &args.cmd {
         Command::Add { inputs } => update::add(&args, &config, inputs).await,
-        Command::Download{ inputs } => download(&args, &config, inputs).await,
+        Command::Download{ inputs } => download(inputs, &args, &config).await,
         Command::Info { inputs } => info(&args, &config, inputs).await,
         Command::List => update::list(&config),
         Command::Update => update::update(&config).await
@@ -61,12 +62,14 @@ async fn run() -> Result<()> {
 
 
 /// Download comics
-async fn download(args: &Arguments, config: &Config, inputs: &Vec<String>) -> Result<()> {
-    // TODO: Use download_and_write_comics function instead
-    let comics = utils::get_comics(args, config, inputs).await?;
-    info!("Found {} {}", comics.len(), if comics.len() > 1 { "comics" } else { "comic" });
-    if comics.len() > 0 {
-        utils::write_comics(comics, config).await?;
+async fn download(inputs: &Vec<String>, args: &Arguments, config: &Config) -> Result<()> {
+    info!("Searching for comics");
+    let links = utils::get_all_links(inputs, args)?;
+    for link in links {
+        let (source, client) = utils::get_source_from_url(&link, config).await?;
+        let link_id = source.id_from_url(&link)?;
+        let comicids = grawlix::source::get_all_ids(&source, &client, link_id).await?;
+        utils::download_and_write_comics(&source, &client, &comicids, config).await;
     }
     Ok(())
 }

@@ -17,7 +17,10 @@ pub fn setup_logger(level: LevelFilter) -> Result<(), fern::InitError> {
             ))
         })
         .level(level)
-        .filter(|metadata| metadata.level() != Level::Debug || filter_log_message(metadata))
+        .filter(|metadata| {
+            (metadata.level() != Level::Debug && metadata.level() != Level::Trace)
+            || filter_log_message(metadata)
+        })
         .chain(std::io::stderr())
         .apply()?;
     Ok(())

@@ -146,7 +146,7 @@ impl OnlinePage {
         if let Some(headers) = &self.headers {
             req = req.headers(headers.try_into().unwrap());
         }
-        // TODO: Remove unwrap
+        // TODO: Remove unwraps
         let resp = req.send().await.unwrap();
         let bytes = resp.bytes().await.unwrap().as_ref().into();
         match &self.encryption {
@@ -167,7 +167,7 @@ fn decrypt_page(bytes: Vec<u8>, enc: &PageEncryptionScheme) -> Vec<u8> {
             let mut aescbc = cbc_decryptor(KeySize::KeySize128, key, iv, NoPadding);
             aescbc.decrypt(&mut image_buffer, &mut decrypted_buffer, true)
                 // TODO: Handle correct
-                .expect("Could not decrypt image from DC Universe Infinite");
+                .expect("Could not decrypt image with AES");
             // Gets image data
             let mut image = decrypted_buffer.take_read_buffer();
             image.take_remaining().to_vec()

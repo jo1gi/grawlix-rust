@@ -69,7 +69,7 @@ async fn create_new_updateseries(source: &Box<dyn Source>, client: &Client, id: 
 
 /// Add series to update file
 pub async fn add(args: &Arguments, config: &Config, inputs: &Vec<String>) -> std::result::Result<(), CliError> {
-    let links = get_all_links(args, inputs)?;
+    let links = utils::get_all_links(inputs, args)?;
     let mut update_data = load_updatefile(&config.update_location)?;
     for link in links {
         let (source, client) = utils::get_source_from_url(&link, config).await?;

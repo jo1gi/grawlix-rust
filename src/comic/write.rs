@@ -5,12 +5,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use reqwest::Client;
 
 impl Comic {
 
     /// Write comic book to disk
-    pub async fn write(&self, path: &str, comic_format: &ComicFormat) -> Result<(), Error> {
-        let client = crate::source::create_default_client();
+    pub async fn write(&self, path: &str, comic_format: &ComicFormat, client: &Client) -> Result<(), Error> {
         let mut comic_file = new_comic_file(&path, comic_format)?;
         for (n, page) in self.pages.iter().enumerate() {
             // Getting page data

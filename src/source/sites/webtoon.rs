@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use crate::{
     comic::Page, metadata::{Author, AuthorType, Metadata},
     source::{
+        self,
         ComicId, Error, Result, Source, SourceResponse, SeriesInfo,
         utils::{
             self, first_text, first_attr, issue_id_match, simple_response, source_request, ANDROID_USER_AGENT
         }
     }};
-use reqwest::{Client, header};
+use reqwest::Client;
 use scraper::{Html, Selector};
 
 pub struct Webtoon;
@@ -25,13 +26,11 @@ impl Source for Webtoon {
         "Webtoon".to_string()
     }
 
-    fn create_client(&self) -> Client {
-        let mut headers = header::HeaderMap::new();
-        headers.insert("Cookie", header::HeaderValue::from_static("needGDPR=false; needCCPA=false; needCOPPA=false"));
-        Client::builder()
-            .default_headers(headers)
-            .build()
-            .unwrap()
+    fn client_builder(&self) -> source::ClientBuilder {
+        source::ClientBuilder::default()
+            .cookie("needGDPR", "false")
+            .cookie("needCCPA", "false")
+            .cookie("needCOPPA", "false")
     }
 
     fn id_from_url(&self, url: &str) -> Result<ComicId> {

@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 use serde::Deserialize;
 use grawlix::source::Credentials;
+use crate::CliError;
 
 /// Command line comic book tool
 #[derive(StructOpt)]
@@ -93,6 +94,9 @@ pub struct Config {
     /// Marvel Config
     #[serde(default = "Default::default")]
     pub marvel: Option<SourceData>,
+    /// Izneo config
+    #[serde(default = "Default::default")]
+    pub izneo: Option<SourceData>
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -100,6 +104,7 @@ pub struct SourceData {
     pub username: Option<String>,
     pub password: Option<String>,
     pub api_key: Option<String>,
+    pub cookies: Option<std::collections::HashMap<String, String>>,
 }
 
 impl TryInto<Credentials> for SourceData {
@@ -117,14 +122,20 @@ impl TryInto<Credentials> for SourceData {
 }
 
 /// Loads config file if it exists
-fn load_config_from_file() -> Option<Config> {
-    let config_path = dirs::config_dir()?.as_path().join("grawlix/grawlix.toml");
+fn load_config_from_file() -> Result<Config, CliError> {
+    let config_path = dirs::config_dir()
+        // TODO: Better error
+        .ok_or(CliError::Unknown)?
+        .as_path()
+        .join("grawlix/grawlix.toml");
     let config = if config_path.exists() {
-        std::fs::read_to_string(config_path).ok()?
+        std::fs::read_to_string(config_path)
+            .unwrap_or_else(|_| String::from(""))
     } else {
         String::from("")
     };
-    toml::from_str(&config).ok()
+    let config = toml::from_str(&config)?;
+    Ok(config)
 }
 
 macro_rules! args_into_config_opt {
@@ -149,8 +160,10 @@ macro_rules! args_into_config_bool {
 }
 
 /// Loads options from config file and command line arguments
-pub fn load_options(args: &Arguments) -> Option<Config> {
+pub fn load_options(args: &Arguments) -> Result<Config, CliError> {
+    log::debug!("Loading file from config");
     let mut config = load_config_from_file()?;
+    log::debug!("Adding options from cli arguments to config");
     args_into_config_opt!(args, config,
         output_template,
         output_format,
@@ -162,7 +175,7 @@ pub fn load_options(args: &Arguments) -> Option<Config> {
         info,
         json
     );
-    return Some(config);
+    return Ok(config);
 }
 
 fn default_template() -> String {

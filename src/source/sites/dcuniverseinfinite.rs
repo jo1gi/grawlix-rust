@@ -2,11 +2,12 @@ use crate::{
     comic::{Page, PageType, PageEncryptionScheme, OnlinePage},
     metadata::{Metadata, Author, AuthorType},
     source::{
+        self,
         Source, Result, Error, ComicId, SeriesInfo, SourceResponse, Credentials,
         utils::{issue_id_match, simple_response, resp_to_json, value_fn}
     }
 };
-use reqwest::{Client, header};
+use reqwest::Client;
 use crypto::{
     sha2::Sha256,
     digest::Digest
@@ -25,16 +26,13 @@ impl Source for DCUniverseInfinite {
         "DC Universe Infinite".to_string()
     }
 
-    fn create_client(&self) -> Client {
-        let mut headers = header::HeaderMap::new();
-        headers.insert("X-Consumer-Key", header::HeaderValue::from_static("DA59dtVXYLxajktV"));
+    fn client_builder(&self) -> source::ClientBuilder {
+        let mut clientbuilder = source::ClientBuilder::default();
+        clientbuilder.add_header("X-Consumer-Key", "DA59dtVXYLxajktV");
         if let Some(x) = &self.authorization_key {
-            headers.insert("Authorization", header::HeaderValue::from_str(&format!("Token {}", x)).unwrap());
+            clientbuilder.add_header("Authorization", &format!("Token {}", x));
         }
-        Client::builder()
-            .default_headers(headers)
-            .build()
-            .unwrap()
+        clientbuilder
     }
 
     fn id_from_url(&self, url: &str) -> Result<ComicId> {
