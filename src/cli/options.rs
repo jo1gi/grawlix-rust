@@ -22,9 +22,6 @@ pub struct Arguments {
     /// Path of file containing input urls
     #[structopt(short, long, global = true)]
     pub file: Option<PathBuf>,
-    /// Save progress when pressing ctrl-c and continue download if progress file exists
-    #[structopt(long, name = "continue", global = true)]
-    pub use_progress_file: bool,
     /// Print extra information to stdout
     #[structopt(long, global = true)]
     pub info: bool,
@@ -74,9 +71,6 @@ pub struct Config {
     /// Should overwrite already existing files if enabled
     #[serde(default = "Default::default")]
     pub overwrite: bool,
-    /// Save progress when pressing ctrl-c and continue download if progress file exists
-    #[serde(rename = "continue", default = "Default::default")]
-    pub use_progress_file: bool,
     /// Print extra information to stdout
     #[serde(default = "Default::default")]
     pub info: bool,
@@ -171,7 +165,6 @@ pub fn load_options(args: &Arguments) -> Result<Config, CliError> {
     );
     args_into_config_bool!(args, config,
         overwrite,
-        use_progress_file,
         info,
         json
     );

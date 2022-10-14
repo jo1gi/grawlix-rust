@@ -2,7 +2,7 @@ use reqwest::Client;
 
 use crate::{
     comic::{Page, OnlinePage, PageEncryptionScheme, PageType},
-    metadata::{Metadata, Author},
+    metadata::Metadata,
     source::{
         ComicId, Result, Source, SourceResponse, SeriesInfo,
         utils::{self, issue_id_match, simple_response, value_to_optstring}
@@ -147,7 +147,7 @@ fn parse_metadata(resp: &[bytes::Bytes]) -> Option<Metadata> {
 
 #[cfg(test)]
 mod tests {
-    use crate::metadata::{ReadingDirection, Author, AuthorType};
+    use crate::metadata::ReadingDirection;
     use crate::source::ComicId;
     use crate::source::utils::tests as test_utils;
 

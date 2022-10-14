@@ -1,6 +1,6 @@
 use crate::{
     CliError,
-    utils::{self, get_all_links, get_source_from_name},
+    utils,
     options::{Arguments, Config}
 };
 use grawlix::source::{
@@ -25,11 +25,16 @@ pub enum UpdateError {
 /// Stores necassary information to update a series
 #[derive(Deserialize, Serialize)]
 struct UpdateSeries {
+    /// Name of source
     source: String,
+    /// Name of series
     name: String,
+    /// Id on series on `source`
     id: String,
+    /// True if the series has ended
     #[serde(default = "Default::default")]
     ended: bool,
+    /// List of issues already downloaded
     downloaded_issues: Vec<String>
 }
 
@@ -103,7 +108,7 @@ pub fn list(config: &Config) -> Result<(), CliError> {
 async fn update_series_info(mut update_data: Vec<UpdateSeries>, config: &Config) -> Result<Vec<UpdateSeries>, CliError> {
     for series in &mut update_data {
         debug!("Updating info for {} ({})", series.name, series.id);
-        let (source, client) = get_source_from_name(&series.source, config).await?;
+        let (source, client) = utils::get_source_from_name(&series.source, config).await?;
         let new_data = create_new_updateseries(&source, &client, &ComicId::Series(series.id.clone())).await?;
         series.name = new_data.name;
         series.ended = new_data.ended;
@@ -124,7 +129,7 @@ async fn find_new_ids(source: &Box<dyn Source>, client: &Client, series: &Update
 async fn download_new_comics(update_data: &mut Vec<UpdateSeries>, config: &Config) -> Result<(), CliError> {
     for series in update_data {
         info!("Searching for updates in {}", series.name);
-        let (source, client) = get_source_from_name(&series.source, config).await?;
+        let (source, client) = utils::get_source_from_name(&series.source, config).await?;
         // Finding new ids
         let comicids = find_new_ids(&source, &client, series).await?;
         // Downloading new comics
