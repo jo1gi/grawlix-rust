@@ -58,7 +58,6 @@ grawlix uses a configuration file stored at
 | --output-template   | output_template   | Output location of comics (See [File output](#file-output))                                                                                                         |
 | --output-format     | output_format     | Format of output comic book (Either cbz or dir)                                                                                                                     |
 | --overwrite         | overwrite         | Overwrite already existing files                                                                                                                                    |
-| --use-progress-file | use_progress_file | Save progress when pressing ctrl-c while the program is running and load progress from early run at startup. If a progress file is found, other inputs are ignored. |
 | --info              | info              | Print additional information about comics to stdout                                                                                                                 |
 | --json              | json              | Print information as json                                                                                                                                           |
 | --update-location   | update_location   | Path to update file (See [Automatic updates](#automatic-updates))                                                                                                   |
