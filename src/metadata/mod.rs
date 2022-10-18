@@ -1,4 +1,5 @@
 mod comicrack;
+mod tachayomi;
 #[cfg(test)]
 mod tests;
 
@@ -33,6 +34,8 @@ pub struct Metadata {
     pub description: Option<String>,
     /// The source the comic has been downloaded from
     pub source: Option<String>,
+    /// Genres
+    pub genres: Vec<String>,
 }
 
 impl Metadata {
@@ -49,21 +52,24 @@ impl Metadata {
     /// Export metadata in all available formats
     pub fn export_all(&self) -> Result<Vec<(&str, String)>, Error> {
         Ok(vec![
-            ("comicinfo.xml", self.comicrack()
+            ("comicinfo.xml", comicrack::export(&self)
                 .or(Err(Error::MetadataExport("Comicrack".to_string())))?),
+            ("details.json", tachayomi::export(self)?),
             ("grawlix.json", serde_json::to_string(&self)
                 .or(Err(Error::MetadataExport("Grawlix".to_string())))?)
         ])
     }
 
+    /// Import file with metadata and create `Metadata` object
     pub fn from_metadata_file<R: Read>(name: &str, mut r: R) -> Option<Self> {
         match name {
+            "comicinfo.xml" => Some(comicrack::import(r)),
+            "details.json" => tachayomi::import(r).ok(),
             "grawlix.json" => {
                 let mut buffer = String::new();
                 r.read_to_string(&mut buffer).ok()?;
                 serde_json::from_str(&buffer).ok()
             },
-            "comicinfo.xml" => Some(Self::from_comicrack(r)),
             _ => None,
         }
     }
